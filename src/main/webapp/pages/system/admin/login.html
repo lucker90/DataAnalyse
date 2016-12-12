@@ -1,0 +1,366 @@
+<%@ page language="java" contentType="tex/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()
+			+ path + "/";
+%>
+<!DOCTYPE html PUBLIC>
+<html>
+<head>
+<title>数据分析原型系统</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src="<%=basePath%>../../../../../static/script/common.js" type="text/javascript"></script>
+<style type="text/css">
+.login_body{
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+  	background-color: #f3f4ef;
+}
+.div_top{
+  width:100%;
+  height:91px;
+  position:relative;
+  background:url("../../../static/images/system/login/top_1.png") repeat-x center center;
+}
+
+.login_name{
+	position: absolute;
+	top: 65px;
+	left: 39px;
+	height: 24px;
+	width: 200px;
+	font-size: 17px;
+	color: #464685;
+	font-weight: bold;	
+}
+
+.top_logo{
+   width:428px;
+   height: 72px;
+   background:url("../../../static/images/system/login/logo.png") no-repeat center center;
+   position: absolute;
+   top: 32px;
+   left: 100px;
+   background-size: cover;
+ }
+.div_line{
+   width: 100%;
+   background:url("../../../static/images/system/login/di_tu.png") left top;
+}
+.div_center_wrap{
+	width: 100%;
+	padding-top: 10px;
+}
+.div_center{
+  margin:0 auto;
+  width:100%;
+  height:409px;
+  position:relative;
+}
+.div_ditu{
+/*    width: 703px;
+   height: 409px;
+   background:url("../../../static/images/system/login/di_t.png") no-repeat center center; */
+   position:absolute;
+   left: 0;
+   top: 0;
+}
+.div_login{
+  width: 303px;
+  height: 260px;
+  background: url("../../../static/images/system/login/denglu.png") no-repeat center center;
+  position:absolute;
+  right:150px;
+  top: 69px;
+}
+#div-dl, #div-rdl{
+	width: 100%;
+	height: 100%;
+}
+.div_jrxt{
+	background: url("../../../static/images/system/login/jrxt.png") no-repeat center center;
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	left: 40px;
+	bottom: 62px;
+	background-color: #f59160;
+}
+.div_tcxt{
+	background: url("../../../static/images/system/login/tcxt.png") no-repeat center center;
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	left: 165px;
+	bottom: 62px;
+	background-color: #f59160;	
+}
+.div_jrxt:hover, .div_tcxt:hover{
+	background-color: #ca4d03;
+	cursor: pointer;
+}
+.div_yhm{
+   width:235px;
+   height:33px;
+   border:1px solid #7083d0;
+   position:absolute;
+   left: 30px;
+   top: 80px; 
+   background: url("../../../static/images/system/login/dl-yhm.png") no-repeat center center;
+}
+.div_mm{
+   width:235px;
+   height:33px;
+   border:1px solid #7083d0;
+   position:absolute;
+   left: 30px;
+   top: 125px;
+   background: url("../../../static/images/system/login/dl-mm.png") no-repeat center center;
+}
+
+.div_yhm:hover, .div_mm:hover{
+   border:1px solid #244b95;
+}
+
+.div_button{
+	 width: 237px;
+	 height: 36px;
+	 position:absolute;
+	 left: 32px;
+	 top: 175px;
+	 background:url("../../../static/images/system/login/dl-btn.png") no-repeat center center;
+	 cursor:pointer;
+}
+.div_button:hover{
+	background:url("../../../static/images/system/login/dl-btn-hover.png") no-repeat center center;
+}
+.div_span{
+	 position:absolute;
+	 font-size:12px;
+	 right: 40px;
+	 bottom: 25px;
+	 cursor:pointer;
+}
+.div_span1{
+	color: #464685;
+}
+.div_span2{
+	color: #0059e2;
+}
+.div_span:hover{
+     color: #fff;
+}
+.div_yhm_input,.div_mm_input{
+   position:absolute;
+   right: 2px;
+   top: 1;
+   border:0;
+}
+.jazz-field-comp-input{
+	color: #2177b9;
+}
+.jazz-field-comp-input-tip{
+	color: #368dd0;
+}
+.div_bottom_bg{
+    height:67px;
+    background:url("../../../static/images/system/login/di.png") repeat-x center center;
+} 
+.div_bottom{
+   margin: 0 auto;
+   height: 67px;
+   line-height: 67px;
+   text-align: center;
+   color: #999999;
+}
+ 
+.jazz-field-comp-in2,.jazz-field-comp-in2:hover{
+   border:none;	
+}
+.jazz-field-comp{
+    margin:0;
+}
+.borderrightblack{
+   border-right:1px solid black;
+}
+.borderrightgainsboro{
+   border-right:1px solid gainsboro;
+}
+</style>
+<script>
+//登入界面只能显示在顶层窗口
+if(window!=top){
+	top.location.href=window.location.href;
+}
+
+	$(function() {
+	
+		$(document).keydown(function(event) {
+			if (event.keyCode == 13) {
+				login();
+			}
+		});
+		
+		_addImg();
+		
+		_frameHeihgt();
+		
+		
+		//控制中间部分不随浏览器窗口大小的改变而改变
+ 		$("body").on("resize", function(){
+ 			$(".div_center_wrap").css({"paddingTop": "10px"});
+ 			$(".div_line").width("100%");
+ 			$(".div_center").width("100%").height("auto");
+ 			
+ 			_addImg();
+ 			_frameHeihgt();
+		});
+		
+	});
+	
+	var num = 419;
+	function _addImg(){
+		$(".div_ditu").empty();
+		var aWidth = jazz.util.windowWidth();
+		if(aWidth <= 1024){
+			$(".div_ditu").append('<img src="../../../static/images/system/login/t600.png" />');
+			$(".div_line").width(1000);
+			$(".div_login").css({"right": "50px"});
+		}else if(aWidth <= 1280){
+			$(".div_ditu").append('<img src="../../../static/images/system/login/t1440.png" />');	
+			$(".div_center").width(1000);
+			$(".div_login").css({"right": "10px"});			
+		}else if(aWidth <= 1660){
+			$(".div_ditu").append('<img src="../../../static/images/system/login/t1440.png" />');
+			$(".div_center").width(1280);
+			$(".div_login").css({"right": "90px"});			
+		}else{
+			$(".div_ditu").append('<img src="../../../static/images/system/login/t1920.png" />');
+			$(".div_center").width(1440);
+			$(".div_login").css({"right": "220px"});
+			$(".div_center").height(465);
+			num = 465;
+		}
+	}
+	
+	function _frameHeihgt(){
+		var aHeight=jazz.util.windowHeight();
+		var _h = aHeight - $(".div_top").outerHeight() - $(".div_bottom_bg").outerHeight();
+		var flag = true;
+		if(_h <= num){
+			_h =  num;
+			flag = false;
+		}
+		$(".div_line").outerHeight(_h);	
+		if(flag){
+			$(".div_center_wrap").css({"paddingTop": Math.floor(($(".div_line").height() - num)/2)+10});
+		}
+	}
+
+	function login() {
+		var userVerify=$("#dlm").textfield("verify");
+		var pwdVerify=$("#mm").passwordfield("verify");
+		if(userVerify && pwdVerify){
+			$.ajax({
+				url:"../../../user/login",
+				data:{
+					dlm : $("#dlm").textfield("getValue"),
+					 mm : $("#mm").passwordfield("getValue")
+				},
+				type:"post",
+				success:function(res){
+					if(res.back=='success'){
+						window.location.href = rootPath + res.url;
+					}else{
+						jazz.error(res.msg);
+					}
+				}
+			});
+		}
+	}
+	
+    relogin();	
+	
+	function relogin(){
+		$.ajax({
+			url:"../../../user/relogin",
+			type:"post",
+			success:function(res){
+				if(res.back=='success'){
+					//获取登录用户
+					$.ajax({
+						url : rootPath+'/user/getLoginName',
+						type : 'post',
+						async: true,
+						success : function(data){
+							var login = data["loginName"] || "";
+							if(login){
+								$(".login_name").append(login +", 欢迎您登录！");				
+							}else{
+								$(".login_name").append("欢迎您登录！");
+							}
+						}
+					});
+					$("#div-dl").hide();
+					$("#div-rdl").show();
+					$(".div_jrxt").on("click", function(){
+						window.location.href = rootPath + res.url;
+					});
+					$(".div_tcxt").on("click", function(){
+						var params = {
+							url : rootPath+'/user/quit',
+							callback : function(data, r, res) {
+								$("#div-rdl").hide();
+								$("#div-dl").show();								
+							}
+						};
+						$.DataAdapter.submit(params);						
+					});
+				}else{
+					$("#div-rdl").hide();
+					$("#div-dl").show();
+				}
+			}
+		});		
+	} 
+</script>
+</head>
+
+
+<body>
+<div class="div_top">
+          <div class="top_logo"></div>
+       </div>
+       
+       <div class="div_line">
+       	 <div class="div_center_wrap">
+	         <div class="div_center">
+		         <div class="div_ditu"></div>
+		         <div style="clear:both;"></div>
+		         <div class="div_login">
+		         	  <div id="div-dl">
+			             <div class="div_yhm">
+				              <div vtype="textfield" id="dlm" class="div_yhm_input" width="197" height="30" valuetip="用户名"></div>
+			             </div>
+			             <div class="div_mm">
+				              <div vtype="passwordfield" id="mm" class="div_mm_input" width="197" height="30" valuetip="密码"></div>
+			             </div> 
+			             <div class="div_button" onclick="login()"></div>
+			             <div class="div_span"><span class="div_span1">没有帐号，</span><span class="div_span2">申请使用</span></div>
+		             </div>
+		             <div id="div-rdl" style="display:none;">
+		             	<div class="login_name"></div>
+		             	<div class="div_jrxt"></div>
+		             	<div class="div_tcxt"></div>
+		             </div>
+		         </div>
+	         </div>
+         </div>
+       </div>
+    <div class="div_bottom_bg">
+          <div class="div_bottom">版权所有:北航王翠娟   地址:北京市海淀区学院路37号北京航空航天大学 邮编:100083 Email:wangcjuan@126.com</div>
+    </div>
+</body>
+</html>

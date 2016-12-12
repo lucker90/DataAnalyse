@@ -1,0 +1,73 @@
+body {
+	background-color: #CCCCCC;
+	margin: 0px;
+}
+p{
+	padding-top:10px;
+	padding-bottom:10px;
+}
+.content {
+	width: 1000px;
+	margin-right: auto;
+	margin-bottom: 0px;
+	margin-left: auto;
+	line-height: 21px;
+	font-size: 14px;
+	background-color: #FFFFFF;
+}
+.check{
+	margin-top:10px;
+	text-align:center;
+	color: #3892D3;
+	display:none;
+}
+.top {
+    height: 100px;
+    background-color: #F9F9F9;
+    border-bottom: 1px solid #47CBF5;
+}
+.logo {
+    width: 511px;
+    height: 64px;
+    float: left;
+    margin-left: 48px;
+    margin-top: 15px;
+    background: url('../../images/system/regist/logo.png') no-repeat scroll 0% 0% transparent;
+}
+.tips_text{
+ 	padding:30px 50px;
+}
+.btn{ 
+	background:none; 
+	border:0; 
+	font-size:14px; 
+	ursor:pointer; 
+	display: inline-block; 
+	text-align: center;
+}
+.btn01{
+	cursor: pointer;
+	width:135px; 
+	height:30px; 
+	background:url(../../images/btn.gif) no-repeat; 
+	color:#fff!important;
+}
+.bt_space{
+	padding-top: 20px;
+	text-align: center;
+}
+.mobilebtn:hover{
+	background: none repeat scroll 0% 0% #EEE;
+}
+.mobilebtn{
+	cursor:pointer;
+	border: medium none;
+	border-radius: 0px;
+	border: 1px solid #DDD;
+	height: 30px;
+	background: none repeat scroll 0% 0% #F7F7F7;
+	color: #666;
+	font-weight: normal;
+	width: 135px;
+	font-size: 14px;
+}
