@@ -38,62 +38,121 @@ public class MessageController {
 		String keyword=req.getParameter("keyword").trim();
 		//System.out.println(keyword);
 		messages=messageService.getMessages(keyword);
-		List<String> nodes=new ArrayList<String>();
-		List<Map> links=new ArrayList<Map>();
-		for(int i=0;i<messages.size();i++)
+		resultMap.put("starttime", messages.get(0).getTime());
+		resultMap.put("endtime", messages.get(messages.size()-1).getTime());
+		List<Map> nodes=new ArrayList<Map>();//节点集合
+		List<Map> links=new ArrayList<Map>();//边集合
+		/*if(messages.size()>0)
 		{
-			
+			String source=String.valueOf(messages.get(0).getSenderid());
+			String target=String.valueOf(messages.get(0).getRecipientid());
+			//添加节点
+			if(!isListMap(nodes,source))
+			{
+				Map t=new HashMap<>();
+				t.put("name", source);
+				t.put("value", 1);
+				t.put("size", 1);
+				nodes.add(t);
+			}
+			if(!isListMap(nodes,target))
+			{
+				Map t=new HashMap<>();
+				t.put("name", target);
+				t.put("value", 1);
+				t.put("size", 1);
+				nodes.add(t);
+			}
+			//添加边
+			Map maplink1=new HashMap<>();
+			maplink1.put("source", source);
+			maplink1.put("target", target);
+			maplink1.put("weight", 1.0);
+			links.add(maplink1);
+//			Map maplink2=new HashMap<>();
+//			maplink2.put("target", source);
+//			maplink2.put("source", target);
+//			maplink2.put("weight", String.valueOf(1));
+//			links.add(maplink2);
+		}*/
+		
+		for(int i=0;i<messages.size();i++)
+		{	
 			String source=String.valueOf(messages.get(i).getSenderid());
 			String target=String.valueOf(messages.get(i).getRecipientid());
 			System.out.println(source+","+target);
-			//添加节点
-			if(!isList(nodes,source))
-				nodes.add(String.valueOf(source));
-			if(!isList(nodes,target))
-				nodes.add(String.valueOf(target));
-			if(i==0)
-			{
-				Map maplink1=new HashMap<>();
-				maplink1.put("source", source);
-				maplink1.put("target", target);
-				maplink1.put("weight", String.valueOf(1));
-				links.add(maplink1);
-				Map maplink2=new HashMap<>();
-				maplink2.put("target", source);
-				maplink2.put("source", target);
-				maplink2.put("weight", String.valueOf(1));
-				links.add(maplink2);
-			}
-			List<Map> listt=new ArrayList<Map>();
+			//List<Map> listt=new ArrayList<Map>();
 			//添加边
+			int flag=0;
 			for(int j=0;j<links.size();j++)
 			{
 				if(links.get(j).get("source").equals(source)&&links.get(j).get("target").equals(target))
 				{
-					int w=Integer.parseInt((String)links.get(j).get("weight"))+1;
-					links.get(j).put("weight", String.valueOf(w));
+					double w=(double)links.get(j).get("weight")+1;
+					links.get(j).put("weight", w);
+					flag=1;
 				}
-				else if(links.get(j).get("source").equals(target)&&links.get(j).get("target").equals(source))
+				if(links.get(j).get("source").equals(target)&&links.get(j).get("target").equals(source))
 				{
-					int w=Integer.parseInt((String)links.get(j).get("weight"))+1;
-					links.get(j).put("weight", String.valueOf(w));
-				}
-				else
-				{
-					Map maplink1=new HashMap<>();
-					maplink1.put("source", source);
-					maplink1.put("target", target);
-					maplink1.put("weight", String.valueOf(1));
-					listt.add(maplink1);
-					Map maplink2=new HashMap<>();
-					maplink2.put("target", source);
-					maplink2.put("source", target);
-					maplink2.put("weight", String.valueOf(1));
-					listt.add(maplink2);
+					double w=(double)links.get(j).get("weight")+1;
+					links.get(j).put("weight", w);
+					flag=1;
 				}
 			}
-			for(int j=0;j<listt.size();j++)
-				links.add(listt.get(j));
+			if(flag==0)
+			{
+				Map maplink1=new HashMap<>();
+				maplink1.put("source", source);
+				maplink1.put("target", target);
+				maplink1.put("weight", 1.0);
+				links.add(maplink1);
+			}
+//			for(int j=0;j<listt.size();j++)
+//				links.add(listt.get(j));
+		}
+		//添加节点，包括节点大小
+		for(int i=0;i<links.size();i++)
+		{
+			String source=(String) links.get(i).get("source");
+			String target=(String) links.get(i).get("target");
+			double weight=(double) links.get(i).get("weight");
+			int flag1=0;
+			int flag2=0;
+			for(int j=0;j<nodes.size();j++)
+			{
+				if(nodes.get(j).get("name").equals(source))
+				{
+					double value=(double)nodes.get(j).get("value");
+					double size=(double)nodes.get(j).get("size");
+					nodes.get(j).put("value", value+weight);
+					nodes.get(j).put("size", size+weight);
+					flag1=1;
+				}
+				if(nodes.get(j).get("name").equals(target))
+				{
+					double value=(double)nodes.get(j).get("value");
+					double size=(double)nodes.get(j).get("size");
+					nodes.get(j).put("value", value+weight);
+					nodes.get(j).put("size", size+weight);
+					flag2=1;
+				}
+			}
+			if(flag1==0)
+			{
+				Map t=new HashMap<>();
+				t.put("name", source);
+				t.put("value", 1.0);
+				t.put("size", 1.0);
+				nodes.add(t);
+			}
+			if(flag2==0)
+			{
+				Map t=new HashMap<>();
+				t.put("name", target);
+				t.put("value", 1.0);
+				t.put("size", 1.0);
+				nodes.add(t);
+			}
 		}
 		resultMap.put("nodes", nodes);
 		resultMap.put("links", links);
@@ -111,6 +170,17 @@ public class MessageController {
 		for(int i=0;i<list.size();i++)
 		{
 			if(list.get(i).equals(node))
+				flag=true;
+		}
+		return flag;
+	}
+	//判断是否为listmap中的节点
+	public boolean isListMap(List<Map> list,String node)
+	{
+		boolean flag=false;
+		for(int i=0;i<list.size();i++)
+		{
+			if(list.get(i).get("name").equals(node))
 				flag=true;
 		}
 		return flag;

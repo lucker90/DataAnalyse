@@ -26,13 +26,15 @@
 <script language="javascript" type="text/javascript" src="../../static/js/jqPlot/plugins/jqplot.categoryAxisRenderer.min.js" ></script>
 <script language="javascript" type="text/javascript" src="../../static/js/jqPlot/plugins/jqplot.highlighter.min.js" ></script>
 <script language="javascript" type="text/javascript" src="../../static/js/jqPlot/plugins/jqplot.pointLabels.min.js" ></script>
+<script type="text/javascript" src="../../static/js/echarts/echarts-all.js" ></script> 
+<!-- <script type="text/javascript" src="../../static/js/echarts/bmap.min.js" ></script> -->
+<script type="text/javascript" src="../../static/js/echarts/dataTool.min.js" ></script>
 <!-- END: load jqplot -->
 <script src="../../static/js/setup.js"  type="text/javascript"></script>
 <script src="../../static/js/news.js"  type="text/javascript"></script>
 <script type="text/javascript">
     $(document).ready(function () {
     	getLoginName();
-    	Search();
     	//setupDashboardChart('chart1');
     	setupLeftMenu();
 	    setSidebarHeight();
@@ -89,7 +91,7 @@
                         <li><a class="menuitem">消息传播图</a>
                             <ul class="submenu">
                                <li><a onclick="Search()">消息搜索</a></li>
-                                <li><a>传播图绘制</a> </li>                            
+                                <li><a onclick="drawMessage()">传播图绘制</a> </li>                            
                             </ul>
                         </li>
                         <li><a class="menuitem">分解图</a>
@@ -100,8 +102,8 @@
                         </li>
                         <li><a class="menuitem">消息统计</a>
                             <ul class="submenu">
-                                <li><a>基本信息</a> </li>
-                                <li><a>消息统计图</a> </li>
+                                <li><a onclick="drawLineGraph()">折线图</a> </li>
+                                <li><a>条形图</a> </li>
                             </ul>
                         </li>
                     </ul>

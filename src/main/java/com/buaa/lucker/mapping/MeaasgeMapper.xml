@@ -7,14 +7,15 @@
     <result column="body" property="content" jdbcType="VARCHAR" />
     <result column="senderid" property="senderid" jdbcType="INTEGER" />
     <result column="recipientid" property="recipientid" jdbcType="INTEGER" />
+    <result column="messagedt" property="time" jdbcType="VARCHAR" />
   </resultMap>
    <!-- <sql id="Base_Column_List" >
     a.messageid,b.body,a.senderid,a.recipientid 
   </sql>  -->
   <select id="getMessages"  parameterType="java.lang.String" resultMap="BaseResultMap">
     select distinct
-    a.messageid,a.subject,b.body,a.senderid,a.recipientid
+    a.messageid,a.subject,b.body,a.senderid,a.recipientid,a.messagedt
     from edgemap a, bodies b 
-    where a.messageid=b.messageid and b.body like  CONCAT('%',#{keyword},'%')
+    where a.messageid=b.messageid and b.body like  CONCAT('%',#{keyword},'%') order by a.messagedt
   </select>
 </mapper>

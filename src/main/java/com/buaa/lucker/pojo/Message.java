@@ -6,6 +6,7 @@ public class Message {
 	String content;
 	int senderid;
 	int recipientid;
+	String time;
 	public int getId() {
         return id;
     }
@@ -39,5 +40,11 @@ public class Message {
     public void setRecipientid(int recipientid)
     {
     	this.recipientid=recipientid;
+    }
+    public String getTime() {
+        return time;
+    }
+    public void setTime(String time) {
+        this.time = time;
     }
 }
