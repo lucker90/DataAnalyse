@@ -41,7 +41,9 @@ function DrawInteractNetwork(){
 }
 /***************************************社区****************************/
 var commData=null;
-
+var topcount=5;//显示top5
+var similaritycount=5;//显示跟种子集最相似的前5个节点
+var categoriescount=5;//五种分类
 //社区发现
 function CommunityDetection(){
 	//切换界面至社区发现
@@ -132,6 +134,65 @@ function getBasicInfo()
 	                       "<p id='p_similarity_top5'></p>"+
 	                   "</div>";
 	$("#main").append(basicgraph_div);
+	//先为节点分类，一共三类，普通节点、重要节点、相似度高的节点
+	var nodes=commData["nodes"];
+	var topnodes=commData["top"];
+	var similaritynodes=commData["similarity"];
+	var seedset=$(".txt_seedset").val().split(",");//种子节点
+	for(var i=0;i<nodes.length;i++){
+		var flagtop=0;
+		var flagsimi=0;
+		for(var j=1;j<topcount+1&&j<topnodes.length;j++){
+			if(nodes[i]["name"]===topnodes[j]["identifier"]){
+				nodes[i]["category"]=1;
+				flagtop=1;
+				break;
+			}				
+		}
+		for(var j=1;j<similaritycount+1&&j<similaritynodes.length;j++){
+			if(nodes[i]["name"]===similaritynodes[j]["identifier"]){
+				nodes[i]["category"]=2;
+				flagsimi=1;
+				break;
+			}			
+		}
+		if(flagtop==0&&flagsimi==0)
+		    nodes[i]["category"]=0;
+		if(flagtop==1&&flagsimi==1)
+			nodes[i]["category"]=3;
+		for(var j=0;j<seedset.length;j++){
+			if(nodes[i]["name"]===seedset[j]){
+				nodes[i]["category"]=4;
+				break;
+			}
+		}
+	}
+	var categories=new Array(categoriescount);
+	categories[0]={
+            "name": "普通节点",
+            "keyword": {},
+            "base": "普通节点"
+        };
+	categories[1]={
+            "name": "重要节点",
+            "keyword": {},
+            "base": "重要节点"
+        };
+	categories[2]={
+            "name": "与种子集最相似的节点",
+            "keyword": {},
+            "base": "与种子集最相似的节点"
+        };
+	categories[3]={
+            "name": "既重要与种子集相似度也高",
+            "keyword": {},
+            "base": "既重要与种子集相似度也高"
+        };
+	categories[4]={
+            "name": "种子节点",
+            "keyword": {},
+            "base": "种子节点"
+        };	
 	//绘图
 	var myChart = echarts.init(document.getElementById('comm_graph'));
     option = {
@@ -139,6 +200,11 @@ function getBasicInfo()
 			text : '社区结构图',
 			x : 'center',
 			y : 'bottom'
+		},
+		 legend : {
+		    data : ['普通节点', '重要节点', '与种子集最相似的节点','既重要与种子集相似度也高','种子节点'],
+		    orient : 'vertical',
+		    x : 'left'
 		},
 		tooltip : {
 			trigger : 'item',
@@ -209,8 +275,8 @@ function getBasicInfo()
 				}
 			}
 		},
-		//categories : commData.categories,
-		nodes : commData.nodes,
+		categories : categories,
+		nodes : nodes,
 		links : commData.links,
 		minRadius : 3,
 		maxRadius : 10,
@@ -223,83 +289,18 @@ function getBasicInfo()
 		ribbonType : false,
 	};
 	myChart.setOption(option);
-// option = null;
-// myChart.showLoading();
-// $.get('../../static/data/les-miserables.gexf', function (xml) {
-// myChart.hideLoading();
-// var graph = echarts.dataTool.gexf.parse(xml);
-// var categories = [];
-// for (var i = 0; i < 9; i++) {
-// categories[i] = {
-// name: '类目' + i
-// };
-//	    }
-//	    graph.nodes.forEach(function (node) {
-//	        node.itemStyle = null;
-//	        node.value = node.symbolSize;
-//	        node.symbolSize /= 1.5;
-//	        node.label = {
-//	            normal: {
-//	                show: node.symbolSize > 30
-//	            }
-//	        };
-//	        node.category = node.attributes.modularity_class;
-//	    });
-//	    option = {
-//	        title: {
-//	            //text: 'Les Miserables',
-//	            subtext: 'Default layout',
-//	            top: 'bottom',
-//	            left: 'right'
-//	        },
-//	        tooltip: {},
-//	        legend: [{
-//	            // selectedMode: 'single',
-//	            data: categories.map(function (a) {
-//	                return a.name;
-//	            })
-//	        }],
-//	        animationDuration: 1500,
-//	        animationEasingUpdate: 'quinticInOut',
-//	        series : [
-//	            {
-//	                name: 'Les Miserables',
-//	                type: 'graph',
-//	                layout: 'none',
-//	                data: graph.nodes,
-//	                links: graph.links,
-//	                categories: categories,
-//	                roam: true,
-//	                label: {
-//	                    normal: {
-//	                        position: 'right',
-//	                        formatter: '{b}'
-//	                    }
-//	                },
-//	                lineStyle: {
-//	                    normal: {
-//	                        color: 'source',
-//	                        curveness: 0.3
-//	                    }
-//	                }
-//	            }
-//	        ]
-//	    };
-//
-//	    myChart.setOption(option);
-//	}, 'xml');
 	//显示社区信息
 	//社区尺寸
 	$("#p_info").html("社区尺寸:&nbsp"+commData['size']);
 	//重要的前5个节点
 	var im_top5="<p>重要节点top5:</p>";
-	for(var i=0;i<5;i++){
+	for(var i=1;i<topcount+1&&i<commData["top"].length;i++){
 		im_top5=im_top5+"<p style='margin-left:60px'>"+commData["top"][i]["identifier"]+"("+commData["top"][i]["rank"]+")"+"</p>";
 	}
 	$("#p_important_top5").html(im_top5);
 	//相似度最高的5个节点
 	var si_top5="<p>与种子集相似度top5:</p>";
-	for(var i=0;i<5;i++){
+	for(var i=1;i<similaritycount+1&&i<commData["similarity"].length;i++){
 		si_top5=si_top5+"<p style='margin-left:60px'>"+commData["similarity"][i]["identifier"]+"("+commData["similarity"][i]["rank"]+")"+"</p>";
 	}
 	$("#p_similarity_top5").html(si_top5);
@@ -308,4 +309,5 @@ function getBasicInfo()
 function CommAnalysis()
 {
 	$("#main").empty();
+	
 }

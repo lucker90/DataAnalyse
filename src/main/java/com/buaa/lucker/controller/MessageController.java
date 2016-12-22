@@ -40,6 +40,13 @@ public class MessageController {
 		messages=messageService.getMessages(keyword);
 		resultMap.put("starttime", messages.get(0).getTime());
 		resultMap.put("endtime", messages.get(messages.size()-1).getTime());
+		List<String> timelist=new ArrayList<String>();
+		for(int i=0;i<messages.size();i++)
+		{
+			timelist.add(messages.get(i).getTime());
+			System.out.println(messages.get(i).getTime());
+		}
+		resultMap.put("timelist", timelist);
 		List<Map> nodes=new ArrayList<Map>();//节点集合
 		List<Map> links=new ArrayList<Map>();//边集合
 		/*if(messages.size()>0)
@@ -143,6 +150,7 @@ public class MessageController {
 				t.put("name", source);
 				t.put("value", 1.0);
 				t.put("size", 1.0);
+				t.put("category", 0);
 				nodes.add(t);
 			}
 			if(flag2==0)

@@ -10,9 +10,12 @@ import javax.annotation.Resource;
 
 import org.springframework.stereotype.Service;
 
+import com.buaa.lucker.Variable;
 import com.buaa.lucker.dao.CommunityDao;
 import com.buaa.lucker.pojo.Edge;
 import com.buaa.lucker.pojo.MapEntry;
+import com.buaa.lucker.pojo.NodeInteract;
+import com.buaa.lucker.pojo.RealComm;
 
 @Service("CommunityService") 
 public class CommunityService {
@@ -128,10 +131,24 @@ public class CommunityService {
 		return allnode;
 	}
 	//获取某一类社区的节点集合
-	public List<String> getNodeofCat(String cat)
+	public Map<String,List<String>> getNodeofCat()
 	{
-		List<String> result=new ArrayList<String>();
-		result=commDao.getNodeCat(cat);
+		Map<String,List<String>> result=new HashMap<String,List<String>>();
+		List<RealComm> resultt=new ArrayList<RealComm>();
+		if(Variable.getRealCommCat()==1)
+			resultt=commDao.getNodeCat1();
+		else
+			resultt=commDao.getNodeCat2();
+		//System.out.println(result.size());
+		for(int i=0;i<resultt.size();i++)
+		{
+			List<String> t=new ArrayList<String>();
+			String[] nodes=resultt.get(i).getNodes().split(",");
+			for(int j=0;j<nodes.length;j++)
+				t.add(nodes[j]);
+			result.put(resultt.get(i).getType(), t);
+			//System.out.println(resultt.get(i).getType()+":"+t);
+		}
 		return result;
 	}
 	public int getInterFeature(String node1,String node2)
@@ -179,6 +196,20 @@ public class CommunityService {
 	{
 		int result=0;
 		result=this.commDao.getCloser(Integer.parseInt(node1),Integer.parseInt(node2)).get(0);
+		return result;
+	}
+	/*获取某个节点的邻居节点以及交互次数
+	 * */
+	public HashMap<String, Double> getNeighbors(String node){
+		HashMap<String, Double> result=new HashMap<String,Double>();
+		List<NodeInteract> resultt=new ArrayList<NodeInteract>();
+		resultt=this.commDao.getNeighbor(Integer.parseInt(node));
+		
+		for(int i=0;i<resultt.size();i++)
+		{
+			//System.out.println(resultt.get(i).getId()+","+resultt.get(i).getCount());
+			result.put(String.valueOf(resultt.get(i).getId()), (double)resultt.get(i).getCount());
+		}
 		return result;
 	}
 }

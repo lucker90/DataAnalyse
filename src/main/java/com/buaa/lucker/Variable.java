@@ -16,6 +16,7 @@ public class Variable {
 	public static List<Map<String, ArrayList<MapEntry>>> SubGraphMap=new ArrayList<Map<String, ArrayList<MapEntry>>>();////与输入节点集对应的连通图结构
 	public static String path="/Users/lucker/Documents/workspaceee/lucker/src/main/";//文件所在路径
 	public static int realCommCat=1;//真实社区是一人同意还是两人同意
+	public static Map<String,List<String>> realComm=new HashMap<String,List<String>>();//真实社区
 	//初始化迭代次数和阿尔法
 	public static int iterations = 10;
 	public static double DumpingFactor = 0.8;
@@ -119,5 +120,13 @@ public class Variable {
 	public static void setRealCommCat(int x)
 	{
 		realCommCat=x;
+	}
+	public static Map<String,List<String>> getRealComm()
+	{
+		return realComm;
+	}
+	public static void setRealComm(Map<String,List<String>> t)
+	{
+		realComm=t;
 	}
 }

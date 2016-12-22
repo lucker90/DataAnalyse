@@ -2,19 +2,14 @@ package com.buaa.lucker.controller;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -34,6 +29,9 @@ import com.buaa.lucker.Variable;
 import com.buaa.lucker.pojo.MapEntry;
 import com.buaa.lucker.pojo.PageRankNode;
 import com.buaa.lucker.service.CommunityService;
+
+
+import com.buaa.lucker.measure;
 
 //import org.gephi.graph.api.*;
 
@@ -68,6 +66,7 @@ public class CommunityController {
 		//设置全局变量
 		Variable.setWholeMap(WholeGraphmap);//整个图结构
 		Variable.setAllnode(allnode);//所有节点
+		
 		//连通性判断
 		List<List<String>> listSeedsets=new ArrayList<List<String>>();///连通种子集
 		listSeedsets=findConnectedSeed(WholeGraphmap,allnode,seedsetlist);
@@ -92,6 +91,7 @@ public class CommunityController {
 		Variable.setSeedsets(listSeedsets); //当前连通的种子集
         Variable.setConnections(listConnections);//连通种子集对应的连通图
         Variable.setSubGraphMaps(listSubMap);
+       
 		return resultMap;
 	}
 	@RequestMapping(value ="/getCommunity",method = RequestMethod.POST)
@@ -104,6 +104,7 @@ public class CommunityController {
 		String[] strs=connSeed.split(",");
 		for(int i=0;i<strs.length;i++)
 			SubSeed.add(strs[i]);
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
 		//分别找到对应的连通图的节点和图结构
 		List<List<String>> seedsets=new ArrayList<List<String>>();
 		List<List<String>> connections=new ArrayList<List<String>>();
@@ -117,10 +118,36 @@ public class CommunityController {
 		SubNodes=connections.get(index);//所研究种子集对应的连通图节点
 		Map<String, ArrayList<MapEntry>> SubGraph=new HashMap<String, ArrayList<MapEntry>>();
 		SubGraph=listSubMap.get(index);//所研究种子集对应的连通图结构
+		
+		
+		//处理种子集，选择和种子集联系紧密的top1/2和种子集点组成种子集再去扩展////////////如果种子集处理不需要则此处可以省略掉
+		HashMap<String, Double> seeds = new HashMap<String, Double>();
+		List<PageRankNode> seedsNode=new ArrayList<PageRankNode>();
+		for(int i=0;i<SubSeed.size();i++)
+		{
+			//seeds.put(SubSeed.get(i),Double.MAX_VALUE);
+			HashMap<String, Double> seedst=new HashMap<String,Double>();
+			seedst=commService.getNeighbors(SubSeed.get(i));//查找邻居，返回值为节点ID和交互次数
+			for(String key:seedst.keySet())
+			{
+				if(!seeds.containsKey(seedst.get(key)))
+					seeds.put(key, seedst.get(key));
+			}
+		}
+		PageRankVector(seeds,seedsNode);//排序
+		//System.out.println(seedsNode);
+		for(int i=0;i<seedsNode.size()/2&&i<10;i++)//////添加邻居1/2的节点
+		{
+			if(!SubSeed.contains(seedsNode.get(i).getIdentifier()))
+				SubSeed.add(seedsNode.get(i).getIdentifier());
+		}
+		System.out.println("处理后的种子节点为："+SubSeed);	
+			
 		//应用改进的pagerank算法得到各个节点的pagerank值
 		List<PageRankNode> subrankedList = new ArrayList<PageRankNode>();
 		List<PageRankNode> similarityList=new ArrayList<PageRankNode>();//各个节点和种子集的相似性
 		similarityList=rank3(Variable.iterations, Variable.DumpingFactor,SubGraph,SubNodes,SubSeed,subrankedList);
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
 		Collections.sort(similarityList);//对节点相似性进行排序
 		resultMap.put("similarity", similarityList);//添加节点和种子集的相似性
 		//开始计算导率
@@ -152,11 +179,15 @@ public class CommunityController {
 				{
 					System.out.println("导率为："+String.valueOf(conductance));
 					conList.add(String.valueOf(conductance));
-					community.add(SubSeed);
+					List<String> comm=new ArrayList<String>();
+					for(int j=0;j<SubSeed.size();j++)
+						comm.add(SubSeed.get(j));
+					community.add(comm);
 				}
+				System.out.println("种子集目前尺寸："+SubSeed.size());
 			}
 		}
-		
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
 		////// 寻找最优社区
 		double minCons = 1.0;
 		List<String> bestComm = new ArrayList<String>();
@@ -175,9 +206,12 @@ public class CommunityController {
 		}
 		String comm="";
 		int i=0;
-		for(i=0;i<bestComm.size()-1;i++)
-			comm=comm+bestComm.get(i)+",";
-		comm=comm+bestComm.get(i);
+		if(bestComm.size()>0)
+		{
+			for(i=0;i<bestComm.size()-1;i++)
+				comm=comm+bestComm.get(i)+",";
+			comm=comm+bestComm.get(i);
+		}
 		resultMap.put("conductance", minCons);//////////添加导率
 		System.out.println("最小的导率为：" + minCons);
 		System.out.println("最优的社区为：" + comm);
@@ -197,6 +231,7 @@ public class CommunityController {
 			}
 			mapt.put("value", weight);
 			mapt.put("size", weight);
+			mapt.put("category", 0);
 			commnode.add(mapt);
 			PageRankNode p=new PageRankNode(bestComm.get(i),weight);
 			Nodedegree.add(p);
@@ -256,11 +291,38 @@ public class CommunityController {
 		resultMap.put("links", commlink);////////////添加边
 		resultMap.put("size", bestComm.size());///////添加社区尺寸
 		//计算评价指标
-		
-		
-		
-		
-		
+		getRealCommunity();//获取真实社区
+		measure m=new measure();
+		HashMap<String,Double> precisionRatio=m.getPrecision(bestComm);//查准率，返回值为13个
+		HashMap<String,Double> recallRatio=m.getRecall(bestComm);//查全率，返回值为13个
+		HashMap<String,Double> NMIS=m.getNMIS(bestComm);//NMI指标
+		double p=0.0;//查准率
+		double r=0.0;//查全率
+		double f1=0.0;//f1指标
+		double NMI=0.0;//NMI指标
+		String cat=null;
+		//根据f1指标确定查准率和查全率的值
+		for(String key:precisionRatio.keySet())
+		{
+			double t=m.getF1(precisionRatio.get(key),recallRatio.get(key));
+			System.out.println(key+":"+precisionRatio.get(key)+","+recallRatio.get(key)+","+t);
+			if(t>f1)
+			//if(t>f1&&!key.equals("base"))
+			{
+				f1=t;
+				p=precisionRatio.get(key);
+				r=recallRatio.get(key);
+				cat=key;
+			}
+		}
+		/*for(String key:NMIS.keySet())
+			System.out.println(key+":"+NMIS.get(key));*/
+		NMI=NMIS.get(cat);
+		System.out.println("社区的查准率为："+p);
+		System.out.println("社区的查全率为："+r);
+		System.out.println("社区的f1指标为："+f1);
+		System.out.println("社区的NMI指标为："+NMI);	
+		System.out.println("种子集对应的连通图"+SubNodes.size());
 		
 		//转为json格式
 		ObjectMapper mapper=new ObjectMapper();
@@ -272,13 +334,14 @@ public class CommunityController {
 	private void getRealCommunity() throws SQLException, IOException
 	{
 		Map<String,List<String>> realComm=new HashMap<>();
-		String[] cats={"base","cat01","cat02","cat03","cat04","cat05","cat06","cat07","cat08","cat09","cat10","cat11","cat12","cat13"};
-		for(int i=0;i<cats.length;i++)
-		{
-			List<String> list=new ArrayList<String>();
-			list=this.commService.getNodeofCat(cats[i]);
-			realComm.put(cats[i], list);
-		}
+		//String[] cats={"base","cat01","cat02","cat03","cat04","cat05","cat06","cat07","cat08","cat09","cat10","cat11","cat12","cat13"};
+		//for(int i=0;i<cats.length;i++)
+		//{
+		realComm=this.commService.getNodeofCat();
+			//realComm.put(cats[i], list);
+			//System.out.println(list);
+		//}
+		Variable.setRealComm(realComm);;
 		/*//新建文件，realcomm1.txt和realcomm2.txt
 		File file1=new File(SrcPath+"realcomm/realcomm1.txt");
 		if(!file1.exists())
@@ -1087,6 +1150,7 @@ public class CommunityController {
     	Map<String, ArrayList<MapEntry>> mapGraph=new HashMap<String, ArrayList<MapEntry>>();
     	mapGraph=Variable.getWholeMap();
     	int n=allnode.size();
+  ///////int n=list.size();
     	//初始化每个节点状态为未访问
     	int[] visited=new int[n];
     	for(int i=0;i<n;i++)
@@ -1098,6 +1162,7 @@ public class CommunityController {
     	for(int i=0;i<list.size();i++)
     	{
    			int index=findIndex(list.get(i),allnode);
+    		///////int index=findIndex(list.get(i),list);
     		if(visited[index]==0)
     		{
     			if(i!=0)
@@ -1116,10 +1181,15 @@ public class CommunityController {
     						for(MapEntry entry : mapGraph.get(node))
     						{
     							if(visited[findIndex(entry.getIdentifier(),allnode)]==0)
+    							///////if(visited[findIndex(entry.getIdentifier(),list)]==0)
     							{
     								visited[findIndex(entry.getIdentifier(),allnode)]=1;//访问位为1
-    								stack.push(entry.getIdentifier());
-    								flag=true;
+    								///////visited[findIndex(entry.getIdentifier(),list)]=1;
+    								if(findIndex(entry.getIdentifier(),list)!=-1)
+    								{
+    									stack.push(entry.getIdentifier());
+    									flag=true;
+    								}
     							}
     						}
     					}

@@ -6,6 +6,15 @@
     <result column="recipientid" property="target" jdbcType="INTEGER" />
     <result column="count" property="weight" jdbcType="INTEGER" />
   </resultMap>
+  <resultMap id="RealCommMap" type="com.buaa.lucker.pojo.RealComm" >
+    <id column="typeid" property="typeid" jdbcType="INTEGER" />
+    <result column="typename" property="type" jdbcType="VARCHAR" />
+    <result column="nodes" property="nodes" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="NodeInteractMap" type="com.buaa.lucker.pojo.NodeInteract" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
    <sql id="Base_Column_List" >
     senderid,recipientid,count(*) as count 
   </sql> 
@@ -47,6 +56,19 @@
       or 
       senderid=#{1} and recipientid=#{0}
   </select>
-  
-  
+   <!-- 真实社区选取 -->
+  <select id="getNodeCat1" resultMap="RealCommMap">
+      select typeid,typename,nodes
+      from realcomm1 
+  </select>  
+   <select id="getNodeCat2" resultMap="RealCommMap">
+      select typeid,typename,nodes
+      from realcomm2
+  </select>
+  <select id="getNeighbor" parameterType="java.lang.Integer" resultMap="NodeInteractMap">
+      select senderid as id,count(*) as count from edgemap where recipientid=#{0} group by senderid
+      union
+      select recipientid as id, count(*) as count from edgemap where senderid=#{0} group by recipientid
+  </select>
+
 </mapper>
