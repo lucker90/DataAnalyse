@@ -21,10 +21,14 @@ public class Variable {
 	public static int iterations = 10;
 	public static double DumpingFactor = 0.8;
 	//各个特征所占比例
-	public static double wOfInteract=0.5546;
-	public static double wOfTopic=0.6112;
-	public static double wOfSameEamil=0.1141;
-	public static double wOfIsCloser=0.0763;
+//	public static double wOfInteract=0.5546;
+//	public static double wOfTopic=0.6112;
+//	public static double wOfSameEamil=0.1141;
+//	public static double wOfIsCloser=0.0763;
+	public static double wOfInteract=0.2;
+	public static double wOfTopic=0.4;
+	public static double wOfSameEamil=0.2;
+	public static double wOfIsCloser=0.2;
 	public static Map<String, ArrayList<MapEntry>> getWholeMap()
 	{
 		return wholeMap;
