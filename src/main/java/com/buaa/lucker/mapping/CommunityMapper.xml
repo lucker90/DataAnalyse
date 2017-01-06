@@ -38,10 +38,24 @@
       or 
       senderid=#{1} and recipientid=#{0}
   </select> 
+  <select id="getInterNum_new" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+      select interact 
+      from similarity 
+      where id1=#{0} and id2=#{1} 
+      or 
+      id1=#{1} and id2=#{0}
+  </select>
   <select id="getSubject" parameterType="java.lang.Integer" resultType="java.lang.String">
       select subject 
       from edgemap 
       where senderid=#{0} or recipientid=#{0}
+  </select>
+  <select id="getSubject_new" parameterType="java.lang.Integer" resultType="java.lang.String">
+      select topic 
+      from similarity 
+      where id1=#{0} and id2=#{1} 
+      or 
+      id1=#{1} and id2=#{0}
   </select>
   
   <select id="getMessageid" parameterType="java.lang.Integer" resultType="java.lang.Integer">
@@ -49,12 +63,26 @@
       from edgemap 
       where recipientid=#{0}
   </select>
+  <select id="getMessageid_new" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+      select sameEmail 
+      from similarity 
+      where id1=#{0} and id2=#{1} 
+      or 
+      id1=#{1} and id2=#{0}
+  </select>
   <select id="getCloser" parameterType="java.lang.Integer" resultType="java.lang.Integer">
       select count(*) 
       from edgemap 
       where senderid=#{0} and recipientid=#{1}
       or 
       senderid=#{1} and recipientid=#{0}
+  </select>
+  <select id="getCloser_new" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+      select closer 
+      from similarity 
+      where id1=#{0} and id2=#{1} 
+      or 
+      id1=#{1} and id2=#{0}
   </select>
    <!-- 真实社区选取 -->
   <select id="getNodeCat1" resultMap="RealCommMap">

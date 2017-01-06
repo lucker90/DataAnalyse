@@ -17,9 +17,13 @@ public interface CommunityDao {
 	List<Integer> getNode();//查询节点
 	//相似性计算
 	List<Integer> getInterNum(Integer node1,Integer node2);//交互次数
+	List<Integer> getInterNum_new(Integer node1,Integer node2);/////交互次数   
 	List<String> getSubject(Integer node);
+	List<String> getSubject_new(Integer node1,Integer node2);///////
 	List<Integer> getMessageid(Integer node);
+	List<Integer> getMessageid_new(Integer node1,Integer node2);///////
 	List<Integer> getCloser(Integer node1,Integer node2);
+	List<Integer> getCloser_new(Integer node1,Integer node2);
 	//真实社区
 	List<RealComm> getNodeCat1();
 	List<RealComm> getNodeCat2();

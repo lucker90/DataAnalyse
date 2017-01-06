@@ -38,8 +38,6 @@ import com.buaa.lucker.service.CommunityService;
 
 import com.buaa.lucker.measure;
 
-//import org.gephi.graph.api.*;
-
 
 @Controller
 @RequestMapping("/Community")
@@ -48,7 +46,6 @@ public class CommunityController {
 	private static String JarPath = CommunityController.class.getProtectionDomain().getCodeSource().getLocation().getPath();	
 	private static String CurrentPath = JarPath.substring(0,JarPath.lastIndexOf("/"));
 	private static String SrcPath = CurrentPath + "/../../../../../";
-	
 	@Autowired
     @Qualifier("CommunityService")
     private CommunityService commService;
@@ -79,7 +76,8 @@ public class CommunityController {
        
 		return resultMap;
 	}
-	//未处理种子集进行社区发现，返回值为f1指标
+	
+	//未处理种子集进行社区发现，返回值为f1指标	
 	@RequestMapping(value ="/getCommunityBefore",method = RequestMethod.POST)
 	@ResponseBody
 	public Map getCommunityBefore(HttpServletRequest req, HttpServletResponse resp) throws ClassNotFoundException, SQLException, IOException, ParseException{
@@ -118,6 +116,7 @@ public class CommunityController {
 		mapper.writeValueAsString(resultMap);
 		return resultMap;
 	}
+	
 	//处理种子集进行社区发现
 	@RequestMapping(value ="/getCommunityAfter",method = RequestMethod.POST)
 	@ResponseBody
@@ -160,7 +159,245 @@ public class CommunityController {
 		mapper.writeValueAsString(resultMap);
 		return resultMap;
 	}
-	//获取社区，社区发现可视化那个模块
+	
+	//获取社区，社区发现可视化那个模块	
+	@RequestMapping(value ="/getCommunityyouhua",method = RequestMethod.POST)
+	@ResponseBody
+	//目前没用
+	public Map getCommunityyouhua(HttpServletRequest req, HttpServletResponse resp) throws ClassNotFoundException, SQLException, IOException{
+		Map resultMap=new HashMap();
+		//当前研究的种子集，并转化为list
+		String connSeed =req.getParameter("conntction").trim();
+		List<String> SubSeed=new ArrayList<String>();
+		String[] strs=connSeed.split(",");
+		for(int i=0;i<strs.length;i++)
+			SubSeed.add(strs[i]);
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
+		//分别找到对应的连通图的节点和图结构
+		List<List<String>> seedsets=new ArrayList<List<String>>();
+		List<List<String>> connections=new ArrayList<List<String>>();
+		List<Map<String, ArrayList<MapEntry>>> listSubMap=new ArrayList<Map<String, ArrayList<MapEntry>>>();
+		seedsets=Variable.getSeedsets();
+		connections=Variable.getConnections();
+		listSubMap=Variable.getSubGraphMaps();
+		int index=findConnforSeed(connSeed,seedsets);
+		List<String> SubNodes=new ArrayList<String>();
+		//System.out.println(index);
+		SubNodes=connections.get(index);//所研究种子集对应的连通图节点
+		Map<String, ArrayList<MapEntry>> SubGraph=new HashMap<String, ArrayList<MapEntry>>();
+		SubGraph=listSubMap.get(index);//所研究种子集对应的连通图结构
+		
+		
+		//处理种子集，选择和种子集联系紧密的top1/2和种子集点组成种子集再去扩展////////////如果种子集处理不需要则此处可以省略掉
+		HashMap<String, Double> seeds = new HashMap<String, Double>();
+		List<PageRankNode> seedsNode=new ArrayList<PageRankNode>();
+		for(int i=0;i<SubSeed.size();i++)
+		{
+			//seeds.put(SubSeed.get(i),Double.MAX_VALUE);
+			HashMap<String, Double> seedst=new HashMap<String,Double>();
+			seedst=commService.getNeighbors(SubSeed.get(i));//查找邻居，返回值为节点ID和交互次数
+			for(String key:seedst.keySet())
+			{
+				if(!seeds.containsKey(seedst.get(key)))
+					seeds.put(key, seedst.get(key));
+			}
+		}
+		PageRankVector(seeds,seedsNode);//排序
+		//System.out.println(seedsNode);
+		for(int i=0;i<seedsNode.size()/2&&i<2;i++)//////添加邻居1/2的节点
+		{
+			if(!SubSeed.contains(seedsNode.get(i).getIdentifier()))
+				SubSeed.add(seedsNode.get(i).getIdentifier());
+		}
+		System.out.println("处理后的种子节点为："+SubSeed);	
+			
+		//应用改进的pagerank算法得到各个节点的pagerank值
+		List<PageRankNode> subrankedList = new ArrayList<PageRankNode>();
+		List<PageRankNode> similarityList=new ArrayList<PageRankNode>();//各个节点和种子集的相似性
+		similarityList=rank3(Variable.iterations, Variable.DumpingFactor,SubGraph,SubNodes,SubSeed,subrankedList);
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
+		Collections.sort(similarityList);//对节点相似性进行排序
+		resultMap.put("similarity", similarityList);//添加节点和种子集的相似性
+		//开始计算导率
+		List<String> conList=new ArrayList<String>();
+		List<List<String>> community=new ArrayList<List<String>>();
+		double[] edges=new double[2];
+		//int count=0;
+		//System.out.println(subrankedList.size());
+		for(int i=0;i<subrankedList.size();i++)
+		{
+			//判断节点是否为种子节点
+			int flag=0;
+			for(int j=0;j<strs.length;j++)
+			{
+				if(strs[j].equals(subrankedList.get(i).getIdentifier()))
+				{
+					flag=1;
+					break;
+				}		
+			}
+			if(flag==0)
+			{
+				SubSeed.add(subrankedList.get(i).getIdentifier());//将节点加入到了种子节点中
+				edges=getEdges(SubSeed,SubGraph);
+				double conductance;
+				conductance=edges[0]/edges[1];
+				
+				if(isConnected(SubSeed,Variable.getAllnode()))
+				{
+					System.out.println("导率为："+String.valueOf(conductance));
+					conList.add(String.valueOf(conductance));
+					List<String> comm=new ArrayList<String>();
+					for(int j=0;j<SubSeed.size();j++)
+						comm.add(SubSeed.get(j));
+					community.add(comm);
+				}
+				System.out.println("种子集目前尺寸："+SubSeed.size());
+			}
+		}
+		//System.out.println("种子集目前尺寸："+SubSeed.size());
+		////// 寻找最优社区
+		double minCons = 1.0;
+		List<String> bestComm = new ArrayList<String>();
+		int count = 0;
+		int size = 100;
+		for(int i=0;i<conList.size();i++) {
+			// 选取导率最小的社区//////////////////
+			if (Double.parseDouble(conList.get(i)) <=minCons) {
+				minCons = Double.parseDouble(conList.get(i));
+				bestComm = community.get(i);
+			}
+			// 选取固定大小的社区//////////////////有问题
+			/*
+			 * if(linecomm.split(",").length==100) { bestComm=linecomm; break; }
+			 */
+		}
+		String comm="";
+		int i=0;
+		if(bestComm.size()>0)
+		{
+			for(i=0;i<bestComm.size()-1;i++)
+				comm=comm+bestComm.get(i)+",";
+			comm=comm+bestComm.get(i);
+		}
+		resultMap.put("conductance", minCons);//////////添加导率
+		System.out.println("最小的导率为：" + minCons);
+		System.out.println("最优的社区为：" + comm);
+		//返回社区结果
+		resultMap.put("type", "force");////////添加图的类型:力的导向图
+		List<Map> commnode=new ArrayList<Map>();
+		List<PageRankNode> Nodedegree=new ArrayList<PageRankNode>();
+		for(i=0;i<bestComm.size();i++)
+		{
+			Map mapt=new HashMap<>();
+			mapt.put("name", bestComm.get(i));
+			
+			double weight=0;
+			for(MapEntry entry:SubGraph.get(bestComm.get(i)))
+			{
+				weight=weight+entry.getWeight();
+			}
+			mapt.put("value", weight);
+			mapt.put("size", weight);
+			mapt.put("category", 0);
+			commnode.add(mapt);
+			PageRankNode p=new PageRankNode(bestComm.get(i),weight);
+			Nodedegree.add(p);
+			
+		}
+		Collections.sort(Nodedegree);
+		resultMap.put("top", Nodedegree);////////添加节点按顺序
+		resultMap.put("nodes", commnode);/////////添加节点
+		List<Map> commlink=new ArrayList<Map>();
+		for(i=0;i<bestComm.size();i++)
+		{
+			for(int j=i+1;j<bestComm.size();j++)
+			{
+				for(String key:SubGraph.keySet())
+				{
+					if(bestComm.get(i).equals(key))
+					{
+						int flag=0;
+						for(MapEntry entry:SubGraph.get(key))
+						{
+							if(entry.getIdentifier().equals(bestComm.get(j)))
+							{
+								Map mapt=new HashMap<>();
+								mapt.put("source", key);
+								mapt.put("target", entry.getIdentifier());
+								mapt.put("weight", entry.getWeight());
+								commlink.add(mapt);
+								flag=1;
+							}
+						}
+						if(flag==1)
+							break;
+					}
+					else if(bestComm.get(j).equals(key))
+					{
+						int flag=0;
+						for(MapEntry entry:SubGraph.get(key))
+						{
+							if(entry.getIdentifier().equals(bestComm.get(i)))
+							{
+								Map mapt=new HashMap<>();
+								mapt.put("source", key);
+								mapt.put("target", entry.getIdentifier());
+								mapt.put("weight", entry.getWeight());
+								commlink.add(mapt);
+								flag=1;
+							}
+						}
+						if(flag==1)
+							break;
+					}
+					else
+						continue;
+				}
+			}
+		}
+		resultMap.put("links", commlink);////////////添加边
+		resultMap.put("size", bestComm.size());///////添加社区尺寸
+		//计算评价指标
+		getRealCommunity();//获取真实社区
+		measure m=new measure();
+		HashMap<String,Double> precisionRatio=m.getPrecision(bestComm);//查准率，返回值为13个
+		HashMap<String,Double> recallRatio=m.getRecall(bestComm);//查全率，返回值为13个
+		HashMap<String,Double> NMIS=m.getNMIS(bestComm);//NMI指标
+		double p=0.0;//查准率
+		double r=0.0;//查全率
+		double f1=0.0;//f1指标
+		double NMI=0.0;//NMI指标
+		String cat=null;
+		//根据f1指标确定查准率和查全率的值
+		for(String key:precisionRatio.keySet())
+		{
+			double t=m.getF1(precisionRatio.get(key),recallRatio.get(key));
+			System.out.println(key+":"+precisionRatio.get(key)+","+recallRatio.get(key)+","+t);
+			if(t>f1)
+			//if(t>f1&&!key.equals("base"))
+			{
+				f1=t;
+				p=precisionRatio.get(key);
+				r=recallRatio.get(key);
+				cat=key;
+			}
+		}
+		/*for(String key:NMIS.keySet())
+			System.out.println(key+":"+NMIS.get(key));*/
+		NMI=NMIS.get(cat);
+		System.out.println("社区的查准率为："+p);
+		System.out.println("社区的查全率为："+r);
+		System.out.println("社区的f1指标为："+f1);
+		System.out.println("社区的NMI指标为："+NMI);	
+		System.out.println("种子集对应的连通图"+SubNodes.size());
+		
+		//转为json格式
+		ObjectMapper mapper=new ObjectMapper();
+		mapper.writeValueAsString(resultMap);
+		
+		return resultMap;
+	}
 	@RequestMapping(value ="/getCommunity",method = RequestMethod.POST)
 	@ResponseBody
 	public Map getCommunity(HttpServletRequest req, HttpServletResponse resp) throws ClassNotFoundException, SQLException, IOException, ParseException{
@@ -210,10 +447,12 @@ public class CommunityController {
 		}
 		System.out.println("处理后的种子节点为："+SubSeed);*/
 		//处理种子集
-		SubSeed=dealSeedSet(SubSeed);
+		List<String> listSeed=new ArrayList<String>();
+		listSeed=dealSeedSet(SubSeed);
 		
+		resultMap.put("seedset", listSeed);
 		//进行社区发现
-		getCommunityOnly(resultMap,SubGraph,SubNodes,SubSeed,strs,"improved");
+		getCommunityOnly(resultMap,SubGraph,SubNodes,listSeed,strs,"improved");
 		
 		//转为json格式
 		ObjectMapper mapper=new ObjectMapper();
@@ -221,6 +460,7 @@ public class CommunityController {
 		
 		return resultMap;
 	}
+	
 	//返回不同跳数下的社区识别结果
 	@RequestMapping(value ="/getCommunityTiaoshu",method = RequestMethod.POST)
 	@ResponseBody
@@ -268,6 +508,7 @@ public class CommunityController {
 		mapper.writeValueAsString(resultMap);
 		return resultMap;
 	}	
+	
 	//按照种子集的数目和大小范围随机生成种子集
 	@RequestMapping(value ="/getRandomSeedsets",method = RequestMethod.POST)
 	@ResponseBody
@@ -307,6 +548,7 @@ public class CommunityController {
 		mapper.writeValueAsString(resultMap);
 		return resultMap;
 	}
+	
 	//传统算法识别社区
 	@RequestMapping(value ="/getCommunityTraditional",method = RequestMethod.POST)
 	@ResponseBody
@@ -353,7 +595,8 @@ public class CommunityController {
 		
 		return resultMap;
 	}
-	//传统算法识别社区
+	
+	//改进算法识别社区
 	@RequestMapping(value = "/getCommunityImproved", method = RequestMethod.POST)
 	@ResponseBody
 	public Map getCommunityImproved(HttpServletRequest req, HttpServletResponse resp) throws JsonGenerationException,JsonMappingException, IOException, ClassNotFoundException, SQLException, ParseException {
@@ -399,7 +642,8 @@ public class CommunityController {
 
 		return resultMap;
 	}
-	/*单纯的连通性判断函数 没有跳数
+	
+    /*单纯的连通性判断函数 没有跳数
 	 * seedsetlist:文本框输入的节点集合
 	 * listSeedsets:所有的连通种子集
 	 * listConnections：所有连通图的节点
@@ -432,6 +676,7 @@ public class CommunityController {
 			System.out.println();
 		}
 	}
+	
 	/*单纯的连通性判断函数，有跳数
 	 * seedsetlist:文本框输入的节点集合
 	 * listSeedsets:所有的连通种子集
@@ -466,28 +711,31 @@ public class CommunityController {
 			System.out.println();
 		}
 	}
+	
 	/*对种子集进行处理,进行扩展//////原来的处理方式
 	* SubSeed:未处理的种子集
 	 * 返回值：处理后的种子集
 	*/
-	private List<String> dealSeedSetold(List<String> SubSeed) {
+	private List<String> dealSeedSet(List<String> SubSeed) {
 		List<String> result = new ArrayList<String>();
 		HashMap<String, Double> seeds = new HashMap<String, Double>();
 		List<PageRankNode> seedsNode = new ArrayList<PageRankNode>();
 
 		for (int i = 0; i < SubSeed.size(); i++) {
-			seeds.put(SubSeed.get(i), Double.MAX_VALUE);
+			//if (!seeds.containsKey(SubSeed.get(i)))
+			  //   seeds.put(SubSeed.get(i), Double.MAX_VALUE);
 			// result.add(SubSeed.get(i));
 			HashMap<String, Double> seedst = new HashMap<String, Double>();
 			seedst = commService.getNeighbors(SubSeed.get(i));// 查找邻居，返回值为节点ID和交互次数
 			for (String key : seedst.keySet()) {
-				if (!seeds.containsKey(seedst.get(key)))
+				if (!seeds.containsKey(key))
 					seeds.put(key, seedst.get(key));
 			}
 		}
 		PageRankVector(seeds, seedsNode);// 排序
 		// System.out.println(seedsNode);
-		for (int i = 0; i < seedsNode.size() / 2 && i < 5; i++)////// 添加邻居1/2的节点
+		for (int i = 0; i < seedsNode.size()/2 && i<20; i++)////// 添加邻居1/2的节点
+		//for (int i = 0; i < seedsNode.size() ; i++)////// 添加邻居1/2的节点
 		{
 			if (!result.contains(seedsNode.get(i).getIdentifier()))
 				result.add(seedsNode.get(i).getIdentifier());
@@ -504,11 +752,19 @@ public class CommunityController {
 	 * SubSeed:未处理的种子集
 	 * 返回值：处理后的种子集
 	 * */
-	private List<String> dealSeedSet(List<String> SubSeed) {
+	private List<String> dealSeedSetsecond(List<String> SubSeed) {
 		List<String> result = new ArrayList<String>();
 		HashMap<String, Double> seeds = new HashMap<String, Double>();
 		List<PageRankNode> seedsNode = new ArrayList<PageRankNode>();
-
+		int count=0;
+		for(int i=0;i<SubSeed.size();i++)
+		{
+			HashMap<String, Double> seedst = new HashMap<String, Double>();
+			seedst = commService.getNeighbors(SubSeed.get(i));// 查找邻居，返回值为节点ID和交互次数
+			count=count+seedst.size();			
+		}
+		if(count>20)
+			return SubSeed;
 		for (int i = 0; i < SubSeed.size(); i++) {
 			seeds.put(SubSeed.get(i), Double.MAX_VALUE);
 			// result.add(SubSeed.get(i));
@@ -534,6 +790,51 @@ public class CommunityController {
 		System.out.println("处理后的种子节点为：" + result);
 		return result;
 	}
+	/*种子集处理.找到种子节点二层邻居中度最大的节点和种子集点一起组成种子节点
+	 * SubSeed:未处理的种子集
+	 * 返回值：处理后的种子集
+	 * */
+	private List<String> dealSeedSetthird(List<String> SubSeed) {
+		List<String> result = new ArrayList<String>();
+		HashMap<String, Double> seeds = new HashMap<String, Double>();
+		List<PageRankNode> seedsNode = new ArrayList<PageRankNode>();
+
+		for (int i = 0; i < SubSeed.size(); i++) {
+			seeds.put(SubSeed.get(i), Double.MAX_VALUE);
+			// result.add(SubSeed.get(i));
+			HashMap<String, Double> seedst = new HashMap<String, Double>();
+			seedst = commService.getNeighbors(SubSeed.get(i));// 查找邻居，返回值为节点ID和交互次数
+			for (String key : seedst.keySet()) {
+				if (!seeds.containsKey(seedst.get(key)))
+					seeds.put(key, seedst.get(key));
+			}
+			//看二层节点
+			for(String key : seedst.keySet())
+			{
+				HashMap<String, Double> seedstin = new HashMap<String, Double>();
+				seedstin = commService.getNeighbors(key);
+				for (String keyin : seedstin.keySet()) {
+					if (!seeds.containsKey(seedstin.get(keyin)))
+						seeds.put(keyin, seedstin.get(keyin));
+				}
+			}
+		}
+		PageRankVector(seeds, seedsNode);// 排序
+		// System.out.println(seedsNode);
+		for (int i = 0; i < 2; i++)// 选取度最高的点和节点组成社区
+		{
+			if (!result.contains(seedsNode.get(i).getIdentifier()))
+				result.add(seedsNode.get(i).getIdentifier());
+		}
+		// 再把初始种子集点添加进去
+		for (int i = 0; i < SubSeed.size(); i++) {
+			if (!result.contains(SubSeed.get(i)))
+				result.add(SubSeed.get(i));
+		}
+		System.out.println("处理后的种子节点为：" + result);
+		return result;
+	}
+	
 	/*单纯的识别社区函数
 	 * resultMap:返回值
 	 * SubGraph：连通子图结构
@@ -563,21 +864,32 @@ public class CommunityController {
 		// int count=0;
 		// System.out.println(subrankedList.size());
 		//先把种子集点加入到community中
-		List<String> commT = new ArrayList<String>();
+		/*List<String> commT = new ArrayList<String>();
 		for (int j = 0; j < SubSeed.size(); j++)
 			commT.add(SubSeed.get(j));
 		conList.add(String.valueOf(1.0));
-		community.add(commT);
-		for (int i = 0; i < subrankedList.size(); i++) {
-			// 判断节点是否为种子节点
-			int flag = 0;
-			for (int j = 0; j < strs.length; j++) {
-				if (strs[j].equals(subrankedList.get(i).getIdentifier())) {
-					flag = 1;
+		community.add(commT);*/
+		//从subrankedList删除种子集
+		for (int i = 0; i < SubSeed.size(); i++) {
+			for(int j=0;j<subrankedList.size();j++)
+			{
+				if(subrankedList.get(j).equals(SubSeed.get(i)))
+				{
+					subrankedList.remove(j);
 					break;
 				}
 			}
-			if (flag == 0) {
+		}
+		for (int i = 0; i < subrankedList.size(); i++) {
+			// 判断节点是否为种子节点
+//			int flag = 0;
+//			for (int j = 0; j < strs.length; j++) {
+//				if (strs[j].equals(subrankedList.get(i).getIdentifier())) {
+//					flag = 1;
+//					break;
+//				}
+//			}
+			//if (flag == 0) {
 				SubSeed.add(subrankedList.get(i).getIdentifier());// 将节点加入到了种子节点中
 				edges = getEdges(SubSeed, SubGraph);
 				double conductance;
@@ -592,7 +904,7 @@ public class CommunityController {
 					community.add(comm);
 				}
 				System.out.println("种子集目前尺寸：" + SubSeed.size());
-			}
+			//}
 		}
 		// System.out.println("种子集目前尺寸："+SubSeed.size());
 		////// 寻找最优社区
@@ -698,8 +1010,8 @@ public class CommunityController {
 		for (String key : precisionRatio.keySet()) {
 			double t = m.getF1(precisionRatio.get(key), recallRatio.get(key));
 			System.out.println(key + ":" + precisionRatio.get(key) + "," + recallRatio.get(key) + "," + t);
-			if (t > f1)
-			// if(t>f1&&!key.equals("base"))
+			//if (t > f1)
+			if(t>f1&&!key.equals("base"))
 			{
 				f1 = t;
 				p = precisionRatio.get(key);
@@ -719,6 +1031,7 @@ public class CommunityController {
 		System.out.println("种子集对应的连通图" + SubNodes.size());
 		resultMap.put("f1", f1);
 	}
+
 	/*查找真实社区
 	 * */
 	private void getRealCommunity() throws SQLException, IOException
@@ -795,6 +1108,7 @@ public class CommunityController {
 		pw1.close();
 		pw2.close();*/
 	}	
+	
 	/*寻找种子集的连通分量 没有跳数
 	 * map:整个图结构
 	 * allnode：所有节点
@@ -928,6 +1242,7 @@ public class CommunityController {
 		}
 		//return resultlist;
 	}
+	
 	/*寻找每个种子集的最大连通子图  没有跳数
 	 * map：整个图结构
 	 * allnode：所有节点
@@ -1096,6 +1411,7 @@ public class CommunityController {
 		}
 		//return resultlist;
 	}
+	
 	/*寻找下标的函数
 	 * */
 	public int findIndex(String node,List<String> allnode)
@@ -1107,6 +1423,7 @@ public class CommunityController {
 		}
 		return -1;
 	}
+	
 	/*判断是否为list中的节点
 	 * */
 	public boolean isSeed(List<String> list,String node)
@@ -1119,6 +1436,7 @@ public class CommunityController {
 		}
 		return flag;
 	}
+	
 	/*Dijkstra求图中所有节点到某一节点的所有最短路径
 	 * node:研究的节点
 	 * map：图结构
@@ -1194,6 +1512,7 @@ public class CommunityController {
 		}
 		return dist;
 	}
+	
 	/*我也不记得这是干嘛的了，反正有用
 	 * */
 	public int min(List<Integer> dist, List<Integer> s) {
@@ -1209,6 +1528,7 @@ public class CommunityController {
 		}
 		return min;
 	}
+	
 	/*根据图节点得到图结构
 	 * listConnections：图的节点
 	 * listresult：返回值，当前节点所对应的图结构
@@ -1251,6 +1571,7 @@ public class CommunityController {
 		}
 		//return listresult;
 	}	
+	
 	/*寻找当前研究的种子集所对应的连通图
 	 * seed:当前研究的种子集
 	 * seedsets：当前所有的连通的种子集
@@ -1268,6 +1589,7 @@ public class CommunityController {
 		}
 		return -1;
 	}
+	
 	/*迭代PageRank算法ֵ
 	 *     iterations:迭代次数
 	 *     dampingFactor:阿尔法
@@ -1423,6 +1745,7 @@ public class CommunityController {
 		//System.out.println("haha"+resultList.size());
 		return similarityList;
 	}
+	
 	/*PageRankֵ值排序
 	 * LastRanking：未排序的
 	 * resultList：已排好序的
@@ -1441,7 +1764,8 @@ public class CommunityController {
 		}
 		//return resultList;
 	}
-	/*计算相似性响亮
+	
+	/*计算相似性向量
      * seeds:种子集
      * lastRanking: 存放各个节点
      * similarity:存放相似性，最后需要改变
@@ -1455,19 +1779,33 @@ public class CommunityController {
 //  			f.createNewFile();
 //  		PrintWriter out =null;
     	//ComputeSimilarity com=new ComputeSimilarity();
+    	
     	//先计算交互相似性 并对其归一化
     	HashMap<String, Double> interact = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
+    		//种子集做特殊处理
+    		if(isSeed(seeds,key))
+    		{
+    			interact.put(key, 0.0);
+    			continue;
+    		}
     		Double countInter=getInterCount(key,seeds);//该节点跟种子集的交互总次数
     		interact.put(key, countInter);//写入交互记录的map中
     		System.out.println("节点"+key+"和种子集的交互向量："+countInter);
     	}
     	Normalization(interact);//归一化
     	//计算话题相似性
+    	//System.out.println("种子集为"+seeds);
     	HashMap<String, Double> topic = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
+    		//种子集做特殊处理
+    		if(isSeed(seeds,key))
+    		{
+    			topic.put(key, 0.0);
+    			continue;
+    		}
     		Double countTopic=getTopicCount(key,seeds);//该节点跟种子集的交互总次数
     		topic.put(key, countTopic);//写入交互记录的map中
     		System.out.println("节点"+key+"和种子集的话题向量："+countTopic);
@@ -1477,6 +1815,12 @@ public class CommunityController {
     	HashMap<String, Double> sameEmail = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
+    		//种子集做特殊处理
+    		if(isSeed(seeds,key))
+    		{
+    			sameEmail.put(key, 0.0);
+    			continue;
+    		}
     		Double countSameEmail=getSameEmailCount(key,seeds);//该节点跟种子集的交互总次数
     		sameEmail.put(key, countSameEmail);//写入交互记录的map中
     		System.out.println("节点"+key+"和种子集的抄送同一篇邮件："+countSameEmail);
@@ -1486,6 +1830,12 @@ public class CommunityController {
     	HashMap<String, Double> IsCloser = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
+    		//种子集做特殊处理
+    		if(isSeed(seeds,key))
+    		{
+    			IsCloser.put(key, 0.0);
+    			continue;
+    		}
     		Double countIsCloser=getIsCloserCount(key,seeds);//该节点跟种子集的交互总次数
     		IsCloser.put(key, countIsCloser);//写入交互记录的map中
     		System.out.println("节点"+key+"和种子集的是否相邻并联系紧密："+countIsCloser);
@@ -1517,6 +1867,7 @@ public class CommunityController {
     	}
     	//return sum;
     }
+   
     /*归一化Double
      * hs:有待归一化的向量
      * */
@@ -1549,6 +1900,7 @@ public class CommunityController {
   		}
   		return result;		
   	}
+  	
   	/*返回节点和种子节点之间的话题相似性
   	 ** key:待研究的节点
   	 * seeds：种子节点
@@ -1562,6 +1914,7 @@ public class CommunityController {
   		}
   		return result;		
   	}
+ 
   	/*返回节点和种子节点之间是否抄送过同一篇邮件
   	 * key:待研究的节点
   	 * seeds：种子节点
@@ -1575,6 +1928,7 @@ public class CommunityController {
   		}
   		return result;		
   	}
+  	
   	/*返回节点和种子节点之间相邻并且联系紧密的数目
   	 * key:待研究的节点
   	 * seeds：种子节点
@@ -1588,11 +1942,19 @@ public class CommunityController {
   		}
   		return result;		
   	}  	
-    /*话题特征
+ 
+  	private Double getTopic(String node1, String node2)
+  	{
+  		double result=0.0;
+  		result=result+this.commService.getTopicFeature(node1,node2);
+  		return result;
+  	}
+  	/////////原来的
+  	/*话题特征
      * node1:节点1
      * node2:节点2
      * */
-  	private Double getTopic(String node1, String node2) throws SQLException, ClassNotFoundException, IOException {
+  	/*private Double getTopic(String node1, String node2) throws SQLException, ClassNotFoundException, IOException {
   		double result=0.0;
   		/////////自己分析话题
   		//去停用词直接计算相似性,去掉the a an等
@@ -1658,8 +2020,10 @@ public class CommunityController {
   			return 0.0;
   		result=result/(list1.size()*count);
   		return result;
-  	}
-    /*去停用词函数,去英文
+  	}*/
+  	
+    
+  	/*去停用词函数,去英文
      * stopword:停用词
      * str：需要去除停用词的字符串
      */
@@ -1684,7 +2048,8 @@ public class CommunityController {
   		//System.out.println("去停用此之后为："+result);
   		return result;
   	}
-	/*英文文本的相似性cos值
+	
+  	/*英文文本的相似性cos值
 	 * str1:字符串1
 	 * str2:字符串2
 	 */
@@ -1739,7 +2104,8 @@ public class CommunityController {
 			return (vectorProduct/(vector1Modulo*vector2Modulo));
 		}
 	}
-    /*
+   
+	/*
      * 是否在同一批邮件中
      * node1:节点1
      * mode2:节点2
@@ -1754,7 +2120,8 @@ public class CommunityController {
 			//result=1.0;	
 		return count;
 	}
-    /*是否有过直接邮件交互
+   
+	/*是否有过直接邮件交互
      * node1:节点1
      * node2:节点2
      * */
@@ -1768,6 +2135,7 @@ public class CommunityController {
 			//result=1.0;
 		return count;
 	}
+	
 	/*计算导率用的参数，两类边的数量
 	 * list：社区
 	 * map：整个图结构
@@ -1811,7 +2179,8 @@ public class CommunityController {
     		array[1]=in+array[0];
     	return array;
     }
-  /*连通行判断ͨ
+  
+    /*连通行判断ͨ
    * list:判断对象
    * allnode：所有节点
    */

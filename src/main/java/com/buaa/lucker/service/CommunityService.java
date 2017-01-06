@@ -151,19 +151,38 @@ public class CommunityService {
 		}
 		return result;
 	}
-	public int getInterFeature(String node1,String node2)
+	//原来的查询交互特征
+	public int getInterFeature_old(String node1,String node2)
 	{
 		int result=0;
 		result=commDao.getInterNum(Integer.parseInt(node1), Integer.parseInt(node2)).get(0);
 		return result;
 	}
-	public List<String> getTopicFeature(String node)
+	//新的查询交互特征
+	public int getInterFeature(String node1,String node2)
+	{
+		int result=0;
+		//System.out.println(node1+","+node2);
+		result=commDao.getInterNum_new(Integer.parseInt(node1), Integer.parseInt(node2)).get(0);
+		return result;
+	}
+	//原来的话题特征提取
+	public List<String> getTopicFeature_old(String node)
 	{
 		List<String> result=new ArrayList<String>();
 		result=commDao.getSubject(Integer.parseInt(node));
 		return result;
 	}
-	public int getEmailFeature(String node1,String node2)
+	//新的话题特征提取
+	public double getTopicFeature(String id1,String id2)
+	{
+		double result=0.0;
+		//System.out.println(id1+","+id2);
+		result=Double.parseDouble(commDao.getSubject_new(Integer.parseInt(id1),Integer.parseInt(id2)).get(0));
+		return result;
+	}
+	//原来的是否抄送过相同邮件
+	public int getEmailFeature_old(String node1,String node2)
 	{
 		int result=0;
 		
@@ -192,10 +211,24 @@ public class CommunityService {
 		}
 		return result;
 	}
-	public int getCloserFeature(String node1,String node2)
+	//新的是否抄送过相同邮件
+	public int getEmailFeature(String id1,String id2)
+	{
+		int result=0;
+		result=commDao.getMessageid_new(Integer.parseInt(id1),Integer.parseInt(id2)).get(0);
+		return result;
+	}
+	//原来的是否有直接交互
+	public int getCloserFeature_old(String node1,String node2)
 	{
 		int result=0;
 		result=this.commDao.getCloser(Integer.parseInt(node1),Integer.parseInt(node2)).get(0);
+		return result;
+	}
+	//原来的是否有直接交互
+	public int getCloserFeature(String id1, String id2) {
+		int result = 0;
+		result = this.commDao.getCloser_new(Integer.parseInt(id1), Integer.parseInt(id2)).get(0);
 		return result;
 	}
 	/*获取某个节点的邻居节点以及交互次数
