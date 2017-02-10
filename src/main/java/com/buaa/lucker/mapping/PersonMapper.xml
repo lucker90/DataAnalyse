@@ -6,12 +6,11 @@
     <result column="recipientid" property="target" jdbcType="INTEGER" />
     <result column="count" property="weight" jdbcType="INTEGER" />
   </resultMap> -->
-  <!-- <select id="getInteract"  parameterType="java.lang.String" resultMap="BaseResultMap">
-    select 
-    <include refid="Base_Column_List" />
-    from edgemap 
-    group by senderid,recipientid
-  </select> -->
+  <select id="getInteractDao"  parameterType="java.lang.String" resultType="java.lang.String">
+    select distinct senderid as id from edgemap where recipientid=#{0}
+    union
+    select distinct recipientid as id from edgemap where senderid=#{0}
+  </select>
   
   
 </mapper>

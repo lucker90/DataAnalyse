@@ -711,7 +711,7 @@ function fenjie_tiaoshu(){
 			}
 		}
 		$("#p_messinfo").html("消息内容："+message);
-		$("#p_timerange").html("跳数："+String(j));
+		$("#p_tiaoshurange").html("跳数："+String(j));
 	}
 }
 function draw_tiaoshufenjie(){

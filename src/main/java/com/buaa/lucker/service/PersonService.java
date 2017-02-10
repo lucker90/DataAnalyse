@@ -14,10 +14,12 @@ import com.buaa.lucker.dao.PersonDao;
 public class PersonService {
 	@Resource  
     private PersonDao personDao;
-	public List<String> getInteractNet(String id,String cengshu)
+	
+	public List<String> getInteract(String id)
 	{
 		List<String> result=new ArrayList<String>();
-		//result=personDao.getInteract(id,cengshu);
+		result=personDao.getInteractDao(id);
 		return result;
 	}
+	
 }

@@ -11,7 +11,13 @@ function getUserBasicInfo(){
 /***************************************社交网络****************************/
 //好友网络
 function getFriendNetwork(){
-	
+	$("#grid_10").empty();
+	var div_interactnetwork="<div id='div_interactnetwork' style='margin-left:10px; margin-top:10px' >" +
+	                       "节点id <input id='txt_id' type='text'/>&nbsp&nbsp&nbsp"+
+	                       "层数 <input id='txt_cengshu' type='text'/>&nbsp&nbsp&nbsp"+
+	                       "<button id='btn_interactnetwork' type='button' onclick='DrawInteractNetwork()'>查询</button>&nbsp&nbsp&nbsp"
+			           "</div>"
+    $("#grid_10").append(div_interactnetwork);
 }
 //交互网络
 function getInteractNetwork(){
@@ -26,6 +32,8 @@ function getInteractNetwork(){
 function DrawInteractNetwork(){
 	var id=$("#txt_id").val();
 	var cengshu=$("#txt_cengshu").val();
+	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
+    $("#grid_10").append(maingraph_div);
 	$.ajax({
 		url :"../../Person/getInteract",
 		data:{
@@ -35,7 +43,118 @@ function DrawInteractNetwork(){
 		type : 'post',
 		async: true,
 		success : function(data){
-			alert("success");
+			var categories=new Array();
+			var legend=new Array();
+			var nodes=new Array();
+			var links=new Array();
+			for(var i=0;i<data["nodes"].length;i++){
+				categories[i]={
+			            "name": "第"+String(i)+"层",
+			            "keyword": {},
+			            "base": "第"+String(i)+"层"
+			        };
+				legend[i]="第"+String(i)+"层";
+				for(var j=0;j<data["nodes"][i].length;j++){
+					nodes[nodes.length]=data["nodes"][i][j];
+					
+				}
+			}
+			links=data["edges"];
+			var myChart = echarts.init(document.getElementById('main'));
+		    option = {
+				title : {
+					text : '交互网络图',
+					x : 'center',
+					y : 'bottom'
+				},
+				legend : {
+				    data : legend,
+				    orient : 'vertical',
+				    x : 'left'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{b}"
+				},
+				backgroundColor:'#DCDCDC',
+				toolbox : {
+					show : true,
+					feature : {
+						restore : {
+							show : true
+						},
+						magicType : {
+							show : true,
+							type : [ 'force', 'chord' ],
+							option : {
+								chord : {
+									minRadius : 2,
+									maxRadius : 10,
+									ribbonType : false,
+									itemStyle : {
+										normal : {
+											label : {
+												show : true,
+												rotate : true
+											},
+											chordStyle : {
+												opacity : 0.2
+											}
+										}
+									}
+								},
+								force : {
+									minRadius : 10,
+									maxRadius : 20,
+									itemStyle : {
+										normal : {
+											label : {
+												show : false
+											},
+											linkStyle : {
+												opacity : 3
+											}
+										}
+									}
+								}
+							}
+						},
+						saveAsImage : {
+							show : true
+						}
+					}
+				},
+				noDataEffect : 'none',
+				series : [ {
+					// FIXME No data
+					type : 'force',
+				} ],
+			};
+
+			option.series[0] = {
+				type : 'force',
+				name : 'webkit-dep',
+				itemStyle : {
+					normal : {
+						linkStyle : {
+							opacity : 3
+						}
+					}
+				},
+				categories : categories,
+				nodes : tiaoshufenjie_nodes,
+				links : tiaoshufenjie_links,
+				minRadius : nodesizeMin,
+				maxRadius : nodesizeMax,
+				gravity : 1.1,
+				scaling : 1.1,
+				steps : 20,
+				large : true,
+				useWorker : true,
+				coolDown : 0.995,
+				ribbonType : false,
+			};
+			myChart.setOption(option);
 		}
 	});
 }
