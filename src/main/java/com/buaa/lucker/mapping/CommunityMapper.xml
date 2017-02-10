@@ -28,6 +28,9 @@
       select senderid as id from edgemap 
       union
       select recipientid as id from edgemap
+  </select> 
+  <select id="getNodebyCount" resultMap="NodeInteractMap">
+      select id,count from tb_count 
   </select>
   
   <!-- 相似性计算 -->

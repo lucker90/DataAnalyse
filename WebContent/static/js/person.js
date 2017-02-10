@@ -721,7 +721,7 @@ function comm_tranditional()
 				seedset:seedset
 			},
 			type : 'post',
-			async: true,
+			async: false,
 			success : function(data){
 				var f1=0;
 				for(var i=0;i<data["result"].length;i++)
@@ -748,7 +748,7 @@ function comm_improved()
 				seedset:seedset
 			},
 			type : 'post',
-			async: true,
+			async: false,
 			success : function(data){
 				var f1=0;
 				for(var i=0;i<data["result"].length;i++)

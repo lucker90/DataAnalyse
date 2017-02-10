@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.buaa.lucker.Variable;
 import com.buaa.lucker.pojo.MapEntry;
+import com.buaa.lucker.pojo.NodeInteract;
 import com.buaa.lucker.pojo.PageRankNode;
 import com.buaa.lucker.service.CommunityService;
 
@@ -519,7 +520,16 @@ public class CommunityController {
 		int big=Integer.parseInt(req.getParameter("seedset_big").trim());
 		// 获取所有节点
 		List<String> allnode = new ArrayList<String>();
-		allnode = this.commService.getAllNode();
+		List<NodeInteract> allnodet=this.commService.getAllNodebyCount();
+		//选择度稍高的节点
+		for(int i=0;i<allnodet.size();i++)
+		{
+			if(allnodet.get(i).getCount()<10)
+				break;
+			else
+				allnode.add(String.valueOf(allnodet.get(i).getId()));
+		}
+		//allnode = this.commService.getAllNode();
 		int n=allnode.size();
 		List<String> allseeds=new ArrayList<String>();
 		List<List<String>> resultlist=new ArrayList<List<String>>();
@@ -581,10 +591,10 @@ public class CommunityController {
 			for (int j = 0; j < listSeedsets.get(i).size(); j++)
 				s[j] = listSeedsets.get(i).get(j);
 			// 对种子集做一下处理
-			List<String> seedset = new ArrayList<String>();
-			seedset = dealSeedSet(listSeedsets.get(i));
+			//List<String> seedset = new ArrayList<String>();
+			//seedset = dealSeedSet(listSeedsets.get(i));
 			Map map = new HashMap();
-			getCommunityOnly(map, listSubMap.get(i), listConnections.get(i), seedset, s,"traditional");
+			getCommunityOnly(map, listSubMap.get(i), listConnections.get(i), listSeedsets.get(i), s,"traditional");
 			map.put("seedset", listSeedsets.get(i));
 			maps[i] = map;
 		}
@@ -734,8 +744,8 @@ public class CommunityController {
 		}
 		PageRankVector(seeds, seedsNode);// 排序
 		// System.out.println(seedsNode);
-		for (int i = 0; i < seedsNode.size()/2 && i<20; i++)////// 添加邻居1/2的节点
-		//for (int i = 0; i < seedsNode.size() ; i++)////// 添加邻居1/2的节点
+		//for (int i = 0; i < seedsNode.size()&&i<0; i++)////// 添加邻居1/2的节点
+		for (int i = 0; i < seedsNode.size() ; i++)////// 添加邻居1/2的节点，最终选取节点的一半
 		{
 			if (!result.contains(seedsNode.get(i).getIdentifier()))
 				result.add(seedsNode.get(i).getIdentifier());
@@ -890,31 +900,36 @@ public class CommunityController {
 //				}
 //			}
 			//if (flag == 0) {
+			if(!isSeed(SubSeed,subrankedList.get(i).getIdentifier()))
 				SubSeed.add(subrankedList.get(i).getIdentifier());// 将节点加入到了种子节点中
-				edges = getEdges(SubSeed, SubGraph);
-				double conductance;
-				conductance = edges[0] / edges[1];
+			else
+				continue;
+			edges = getEdges(SubSeed, SubGraph);
+			double conductance;
+			conductance = edges[0] / edges[1];
 
-				if (isConnected(SubSeed, Variable.getAllnode())) {
-					System.out.println("导率为：" + String.valueOf(conductance));
-					conList.add(String.valueOf(conductance));
-					List<String> comm = new ArrayList<String>();
-					for (int j = 0; j < SubSeed.size(); j++)
-						comm.add(SubSeed.get(j));
-					community.add(comm);
-				}
-				System.out.println("种子集目前尺寸：" + SubSeed.size());
+			if (isConnected(SubSeed, Variable.getAllnode())) {
+				System.out.println("导率为：" + String.valueOf(conductance));
+				conList.add(String.valueOf(conductance));
+				List<String> comm = new ArrayList<String>();
+				for (int j = 0; j < SubSeed.size(); j++)
+					comm.add(SubSeed.get(j));
+				community.add(comm);
+			}
+			System.out.println("种子集目前尺寸：" + SubSeed.size());
 			//}
 		}
 		// System.out.println("种子集目前尺寸："+SubSeed.size());
 		////// 寻找最优社区
+		System.out.println(conList);
 		double minCons = 1.0;
-		List<String> bestComm = new ArrayList<String>();
+		List<String> bestComm = community.get(0);
 		int count = 0;
 		int size = 100;
 		for (int i = 0; i < conList.size(); i++) {
 			// 选取导率最小的社区//////////////////
-			if (Double.parseDouble(conList.get(i)) <= minCons) {
+			if (Double.parseDouble(conList.get(i)) <= minCons&&community.get(i).size()>=100&&community.get(i).size()<=300) {
+				System.out.println(minCons);
 				minCons = Double.parseDouble(conList.get(i));
 				bestComm = community.get(i);
 			}
@@ -1601,6 +1616,181 @@ public class CommunityController {
 	{	
 		HashMap<String, Double> lastRanking = new HashMap<String, Double>();
 	    HashMap<String, Double> nextRanking = new HashMap<String, Double>();
+	    HashMap<String, Double> similarity = new HashMap<String, Double>();
+	        
+	    //初始化lastRanking为0
+	    for (String key : mapSub.keySet()) 
+	    {
+	        lastRanking.put(key, 0.0);
+	        for(MapEntry entry : mapSub.get(key))
+	        {
+	            if(!mapSub.containsKey(entry.getIdentifier()))
+	            	lastRanking.put(entry.getIdentifier(), 0.0);
+	           }            		
+	    }
+	    //初始化lastRanking为节点分之一
+	    Double startRank = 1.0 / lastRanking.size();
+	    for (String key : mapSub.keySet()) 
+	    {
+	        lastRanking.put(key, startRank);
+	        if(isSeed(list,key))
+	        	similarity.put(key,1.0);
+	        else
+	        	similarity.put(key, startRank);
+	        for(MapEntry entry : mapSub.get(key))
+	        {
+	            if(!mapSub.containsKey(entry.getIdentifier()))
+	            	lastRanking.put(entry.getIdentifier(), startRank);
+	        }           		
+	    } 
+	    double dampingFactorComplement = 1.0 - dampingFactor;    
+	    //迭代iterations次
+	    double d=Double.MAX_VALUE;
+	    //for (int times = 0; times < iterations; times++)
+	    while(d>Variable.getDis())
+	    {
+	    	//初始化nextRanking为0
+	        for (String key : mapSub.keySet()) 
+	        {
+	        	nextRanking.put(key, 0.0);
+	            for(MapEntry entry : mapSub.get(key))
+	            {
+	                if(!mapSub.containsKey(entry.getIdentifier()))
+	                	nextRanking.put(entry.getIdentifier(), 0.0);
+	            }
+	        }
+	        //pagerank迭代
+	        for(String key :mapSub.keySet())
+	        {
+	        	for(MapEntry entry : mapSub.get(key))
+	        	{
+	        		double t;
+	        		t=nextRanking.get(entry.getIdentifier())+lastRanking.get(key)/mapSub.get(key).size();
+	        		nextRanking.put(entry.getIdentifier(), t);
+	        	}      		
+	        }
+	    	for(String key : nextRanking.keySet())
+	    	{    			
+	    		nextRanking.put(key, dampingFactor*nextRanking.get(key)+dampingFactorComplement*similarity.get(key));	    				
+	    	}
+	        //将nextRanking值赋给lastRanking,并计算差值
+	    	double cha=0.0;
+	        for (String identifier : nextRanking.keySet()) 
+	        {
+	        	double a=nextRanking.get(identifier);
+				double b=lastRanking.get(identifier);
+				cha=cha+Math.abs((b-a)*(b-a));
+	        	lastRanking.put(identifier, nextRanking.get(identifier));
+	        }
+	        d=cha;
+	        //lastRanking=nextRanking;
+	        //System.out.println("��"+times+"�ε��");
+	        ///for (String identifier : lastRanking.keySet())
+	        //{
+	        //	System.out.println(identifier+","+lastRanking.get(identifier));
+	        //}      	
+	    } 
+	    List<PageRankNode> similarityList=new ArrayList<PageRankNode>();
+	    System.out.println(iterations + " pagerank迭代结束...");       
+	    PageRankVector(lastRanking,resultList); 
+	    return similarityList;
+	}
+	/*考虑相似性的pagerank迭代
+	 * iterations：迭代次数 dampingFactor：阿尔法参数 mapSub：连通子图图结构 listnode：所有节点
+	 * list：种子节点
+	 * resultList:各个节点的pagerank值
+	 */
+	public  List<PageRankNode> rank3(int iterations, double dampingFactor,Map<String, ArrayList<MapEntry>> mapSub, List<String> listnode, List<String> list,List<PageRankNode> resultList) throws ClassNotFoundException, SQLException, IOException{
+		HashMap<String, Double> lastRanking = new HashMap<String, Double>();
+		HashMap<String, Double> nextRanking = new HashMap<String, Double>();
+		// List<String> listnode=new ArrayList<String>();
+		// 初始化lastranking为0
+		for (String key : mapSub.keySet()) {
+			lastRanking.put(key, 0.0);
+			for (MapEntry entry : mapSub.get(key)) {
+				if (!mapSub.containsKey(entry.getIdentifier()))
+					lastRanking.put(entry.getIdentifier(), 0.0);
+			}
+		}
+		// 初始化lastranking为节点分之一
+		Double startRank = 1.0 / lastRanking.size();
+		for (String key : mapSub.keySet()) {
+			lastRanking.put(key, startRank);
+			for (MapEntry entry : mapSub.get(key)) {
+				if (!mapSub.containsKey(entry.getIdentifier()))
+					lastRanking.put(entry.getIdentifier(), startRank);
+			}
+		}
+		double dampingFactorComplement = 1.0 - dampingFactor;
+		// 获取节点相似性
+		HashMap<String, Double> similarity = new HashMap<String, Double>();
+		double sum = 0;
+		// 单线程实现相似性向量/////////////////////整个算一个节点和种子节点的相似性
+		/*
+		 * for(String key : lastRanking.keySet()) { double s=getS(key,list);
+		 * sum=sum+s; similarity.put(key, s);
+		 * //System.out.println(similarity.get(key)); }
+		 */
+		// 单线程实现相似性向量/////////////////////分别算各个特征的相似性向量，归一化后再相加，再归一化（归一化在后边）
+		getSimilarity(list, lastRanking, similarity);// 获取相似性向量，返回值为该向量所有元素的和（种子集，各个节点）；
+		// pagerank迭代若干次，保证迭代前后的向量差小于某个阈值
+		double d=Double.MAX_VALUE;
+		//for (int times = 0; times < iterations; times++) {
+		while(d>Variable.getDis()){
+			// 初始化nextranking为0
+			for (String key : mapSub.keySet()) {
+				nextRanking.put(key, 0.0);
+				for (MapEntry entry : mapSub.get(key)) {
+					if (!mapSub.containsKey(entry.getIdentifier()))
+						nextRanking.put(entry.getIdentifier(), 0.0);
+				}
+			}
+			// pagerank
+			for (String key : mapSub.keySet()) {
+				for (MapEntry entry : mapSub.get(key)) {
+					double t;
+					t = nextRanking.get(entry.getIdentifier()) + lastRanking.get(key) / mapSub.get(key).size();
+					nextRanking.put(entry.getIdentifier(), t);
+				}
+			}
+			//
+			for (String key : nextRanking.keySet()) {
+				nextRanking.put(key,
+						dampingFactor * nextRanking.get(key) + dampingFactorComplement * similarity.get(key));
+			}
+			// 将nextranking值赋给lastranking,并计算向量差值
+			double cha=0.0;
+			for (String identifier : nextRanking.keySet()) {
+				double a=nextRanking.get(identifier);
+				double b=lastRanking.get(identifier);
+				cha=cha+Math.abs((b-a)*(b-a));
+				lastRanking.put(identifier, nextRanking.get(identifier));
+			}
+			d=cha;
+		}
+		List<PageRankNode> similarityList=new ArrayList<PageRankNode>();
+        for(String key:similarity.keySet())
+        {
+        	PageRankNode p=new PageRankNode(key,similarity.get(key));
+        	similarityList.add(p);
+        }
+		System.out.println(iterations + " pagerank迭代结束...");
+		PageRankVector(lastRanking,resultList);
+		//System.out.println("haha"+resultList.size());
+		return similarityList;
+	}
+	
+	/*迭代PageRank算法ֵ
+	 *     iterations:迭代次数
+	 *     dampingFactor:阿尔法
+	 *     mapSub:连通子图
+	 *     list:种子节点
+	 */
+	//传统pagerank算法
+	public List<PageRankNode> rank1times(int iterations, double dampingFactor,Map<String, ArrayList<MapEntry>> mapSub,List<String> listnode,List<String> list,List<PageRankNode> resultList) throws ClassNotFoundException, UnsupportedEncodingException, SQLException, ParseException
+	{	
+		HashMap<String, Double> lastRanking = new HashMap<String, Double>();
+	    HashMap<String, Double> nextRanking = new HashMap<String, Double>();
 	        
 	    //初始化lastRanking为0
 	    for (String key : mapSub.keySet()) 
@@ -1673,7 +1863,7 @@ public class CommunityController {
 	 * list：种子节点
 	 * resultList:各个节点的pagerank值
 	 */
-	public  List<PageRankNode> rank3(int iterations, double dampingFactor,Map<String, ArrayList<MapEntry>> mapSub, List<String> listnode, List<String> list,List<PageRankNode> resultList) throws ClassNotFoundException, SQLException, IOException{
+	public  List<PageRankNode> rank3times(int iterations, double dampingFactor,Map<String, ArrayList<MapEntry>> mapSub, List<String> listnode, List<String> list,List<PageRankNode> resultList) throws ClassNotFoundException, SQLException, IOException{
 		HashMap<String, Double> lastRanking = new HashMap<String, Double>();
 		HashMap<String, Double> nextRanking = new HashMap<String, Double>();
 		// List<String> listnode=new ArrayList<String>();
@@ -1745,7 +1935,6 @@ public class CommunityController {
 		//System.out.println("haha"+resultList.size());
 		return similarityList;
 	}
-	
 	/*PageRankֵ值排序
 	 * LastRanking：未排序的
 	 * resultList：已排好序的
@@ -1795,6 +1984,9 @@ public class CommunityController {
     		System.out.println("节点"+key+"和种子集的交互向量："+countInter);
     	}
     	Normalization(interact);//归一化
+//    	for(String key:interact.keySet())
+//    		System.out.print(interact.get(key));
+//    	System.out.println();
     	//计算话题相似性
     	//System.out.println("种子集为"+seeds);
     	HashMap<String, Double> topic = new HashMap<String, Double>();
@@ -1811,6 +2003,9 @@ public class CommunityController {
     		System.out.println("节点"+key+"和种子集的话题向量："+countTopic);
     	}
     	Normalization(topic);//归一化
+//    	for(String key:topic.keySet())
+//    		System.out.print(topic.get(key));
+//    	System.out.println();
     	//是否抄送过同一篇邮件
     	HashMap<String, Double> sameEmail = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
@@ -1842,9 +2037,11 @@ public class CommunityController {
     	}
     	Normalization(IsCloser);//归一化
     	//对所有特征进行合并并归一化
+    	Double sum=0.0;
     	for(String key : lastRanking.keySet())
     	{
     		Double s=Variable.wOfInteract*interact.get(key)+Variable.wOfTopic*topic.get(key)+Variable.wOfSameEamil*sameEmail.get(key)+Variable.wOfIsCloser*IsCloser.get(key);
+    		sum=sum+s;
     		System.out.println("节点"+key+"和种子集的相似性为："+s);
 //    		try{
 //      			writer=new FileWriter(f,true);
@@ -1863,6 +2060,7 @@ public class CommunityController {
     	for(String key : lastRanking.keySet())
     	{
     		if(isSeed(seeds,key))
+    			//similarity.put(key, 4.0/(sum+4));
     			similarity.put(key, 1.0);
     	}
     	//return sum;
@@ -1898,6 +2096,7 @@ public class CommunityController {
   		{
   			result=result+this.commService.getInterFeature(key, seeds.get(i));
   		}
+  		result=result/seeds.size();
   		return result;		
   	}
   	
@@ -1910,8 +2109,10 @@ public class CommunityController {
   		Double result=0.0;
   		for(int i=0;i<seeds.size();i++)
   		{
-  			result=result+getTopic(key,seeds.get(i));
+  			//if(key!=seeds.get(i))
+  				result=result+getTopic(key,seeds.get(i));
   		}
+  		result=result/seeds.size();
   		return result;		
   	}
  
@@ -1926,6 +2127,7 @@ public class CommunityController {
   		{
   			result=result+getsameEmail(key,seeds.get(i));
   		}
+  		result=result/seeds.size();
   		return result;		
   	}
   	
@@ -1940,6 +2142,7 @@ public class CommunityController {
   		{
   			result=result+getCloser(key,seeds.get(i));
   		}
+  		result=result/seeds.size();
   		return result;		
   	}  	
  
@@ -2048,7 +2251,6 @@ public class CommunityController {
   		//System.out.println("去停用此之后为："+result);
   		return result;
   	}
-	
   	/*英文文本的相似性cos值
 	 * str1:字符串1
 	 * str2:字符串2

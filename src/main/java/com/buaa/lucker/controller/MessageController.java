@@ -34,6 +34,7 @@ public class MessageController {
 	public Map getMessageByKeyWord(HttpServletRequest req, HttpServletResponse resp) throws JsonGenerationException, JsonMappingException, IOException{
 		Map resultMap=new HashMap();		
 		List<Message> messages = new ArrayList<Message>();
+		//Map messageMap=new HashMap();
 		//System.out.println(req);
 		String keyword=req.getParameter("keyword").trim();
 		//System.out.println(keyword);
@@ -164,6 +165,8 @@ public class MessageController {
 		}
 		resultMap.put("nodes", nodes);
 		resultMap.put("links", links);
+		
+		resultMap.put("messages", messages);
 		//转为json格式
 		ObjectMapper mapper=new ObjectMapper();
 		mapper.writeValueAsString(resultMap);

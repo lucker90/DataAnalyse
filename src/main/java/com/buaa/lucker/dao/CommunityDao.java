@@ -15,6 +15,7 @@ import com.buaa.lucker.pojo.RealComm;
 public interface CommunityDao {
 	List<Edge> getGraph();//查询图
 	List<Integer> getNode();//查询节点
+	List<NodeInteract> getNodebyCount();//查询节点，按照度排序
 	//相似性计算
 	List<Integer> getInterNum(Integer node1,Integer node2);//交互次数
 	List<Integer> getInterNum_new(Integer node1,Integer node2);/////交互次数   

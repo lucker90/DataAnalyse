@@ -125,9 +125,19 @@ public class CommunityService {
 		allnodet=commDao.getNode();
 		for(int i=0;i<allnodet.size();i++)
 		{
-			//System.out.println(allnodet.get(i));
 			allnode.add(String.valueOf(allnodet.get(i)));
 		}
+		return allnode;
+	}
+	//获取所有节点
+	public List<NodeInteract> getAllNodebyCount() {
+		/*
+		 * List<Integer> allnodet=new ArrayList<Integer>(); List<String>
+		 * allnode=new ArrayList<String>(); allnodet=commDao.getNode(); for(int
+		 * i=0;i<allnodet.size();i++) {
+		 * allnode.add(String.valueOf(allnodet.get(i))); } return allnode;
+		 */
+		List<NodeInteract> allnode = commDao.getNodebyCount();
 		return allnode;
 	}
 	//获取某一类社区的节点集合

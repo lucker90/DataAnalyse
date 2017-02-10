@@ -20,6 +20,7 @@ public class Variable {
 	//初始化迭代次数和阿尔法
 	public static int iterations = 10;
 	public static double DumpingFactor = 0.8;
+	public static double dis=0.01;
 	//各个特征所占比例
 //	public static double wOfInteract=0.5546;
 //	public static double wOfTopic=0.6112;
@@ -29,6 +30,14 @@ public class Variable {
 	public static double wOfTopic=0.4;
 	public static double wOfSameEamil=0.1;
 	public static double wOfIsCloser=0.1;
+	public static double getDis()
+	{
+		return dis;
+	}
+	public static void setDis(double t)
+	{
+		dis=t;
+	}
 	public static Map<String, ArrayList<MapEntry>> getWholeMap()
 	{
 		return wholeMap;
