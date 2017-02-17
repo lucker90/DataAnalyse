@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.buaa.lucker.dao.PersonDao" >
-  <!-- <resultMap id="BaseResultMap" type="com.buaa.lucker.pojo.Edge" >
-    <id column="senderid" property="source" jdbcType="INTEGER" />
-    <result column="recipientid" property="target" jdbcType="INTEGER" />
+  <resultMap id="BaseResultMap" type="com.buaa.lucker.pojo.Edge" >
+    <id column="source" property="source" jdbcType="INTEGER" />
+    <result column="target" property="target" jdbcType="INTEGER" />
     <result column="count" property="weight" jdbcType="INTEGER" />
-  </resultMap> -->
-  <select id="getInteractDao"  parameterType="java.lang.String" resultType="java.lang.String">
-    select distinct senderid as id from edgemap where recipientid=#{0}
+  </resultMap>
+  <select id="getInteractDao"  parameterType="java.lang.String" resultMap="BaseResultMap">
+    select distinct recipientid as source,senderid as target from edgemap where recipientid=#{0}
     union
-    select distinct recipientid as id from edgemap where senderid=#{0}
+    select distinct senderid as source,recipientid as target from edgemap where senderid=#{0}
   </select>
   
   

@@ -2,6 +2,8 @@ package com.buaa.lucker.dao;
 
 import java.util.List;
 
+import com.buaa.lucker.pojo.Edge;
+
 public interface PersonDao {
-	List<String> getInteractDao(String id);
+	List<Edge> getInteractDao(String id);
 }

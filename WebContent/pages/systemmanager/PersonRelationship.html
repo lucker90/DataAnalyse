@@ -39,7 +39,7 @@
 <script type="text/javascript">
     $(document).ready(function () {
     	getLoginName();
-    	getUserBasicInfo();
+    	CommunityDetection();
         setupLeftMenu();
         setSidebarHeight();
     });
@@ -90,7 +90,15 @@
         <div class="grid_2">
             <div class="box sidemenu">
                 <div class="block" id="section-menu">
-                    <ul class="section menu">
+                    <ul class="section menu">   
+                        <li><a class="menuitem">社区</a>
+                            <ul class="submenu">
+                                <li><a onclick="CommunityDetection()">社区发现</a> </li>
+                               <!--  <li><a onclick="SeedsetAnalyse()">种子集分析</a> </li>
+                                <li><a onclick="TiaoshuAnalyse()">跳数分析</a> </li>
+                                <li><a onclick="ResultCompare()">结果对比</a> </li> -->
+                            </ul>
+                        </li>
                         <li><a class="menuitem">用户信息</a>
                             <ul class="submenu">
                                 <li><a onclick="getUserBasicInfo()">基本信息</a> </li>
@@ -101,14 +109,6 @@
                             <ul class="submenu">
                                 <li><a onclick="getFriendNetwork()">好友网络</a> </li>
                                 <li><a onclick="getInteractNetwork()">交互网络</a> </li>
-                            </ul>
-                        </li>
-                        <li><a class="menuitem">社区</a>
-                            <ul class="submenu">
-                                <li><a onclick="CommunityDetection()">社区发现</a> </li>
-                                <li><a onclick="SeedsetAnalyse()">种子集分析</a> </li>
-                                <li><a onclick="TiaoshuAnalyse()">跳数分析</a> </li>
-                                <li><a onclick="ResultCompare()">结果对比</a> </li>
                             </ul>
                         </li>
                     </ul>

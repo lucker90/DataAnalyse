@@ -33,7 +33,7 @@ public class PersonController {
 	@ResponseBody
 	public Map getInteract(HttpServletRequest req, HttpServletResponse resp) throws JsonGenerationException, JsonMappingException, IOException{
 		Map map=new HashMap();
-		Map<String,List> nodemap=new HashMap<String,List>();
+		List<List<String>> nodelist=new ArrayList<List<String>>();
 		List<Edge> edgelist=new ArrayList<Edge>();
 		String id = req.getParameter("id").trim();
 		String cengshu = req.getParameter("cengshu").trim();
@@ -43,7 +43,7 @@ public class PersonController {
 		//添加第一层
 		List<String> listcurrent=new ArrayList<String>();
 		listcurrent.add(id);
-		nodemap.put("0", listcurrent);
+		nodelist.add(listcurrent);
 		//当前层节点，需要不断的更新
 //		List<String> listCurrent=new ArrayList();
 //		for(int i=0;i<list.size();i++)
@@ -51,29 +51,49 @@ public class PersonController {
 		//开始按层查找
 		for(int i=1;i<=Integer.parseInt(cengshu);i++){
 			listcurrent=new ArrayList<String>();
-			for(int j=0;j<nodemap.get(String.valueOf(i-1)).size();j++)
+			for(int j=0;j<nodelist.get(i-1).size();j++)
 			{
-				String s=(String) nodemap.get(String.valueOf(i-1)).get(j);
-				List<String> list=personService.getInteract(s);
+				String s=(String) nodelist.get(i-1).get(j);
+				List<Edge> list=personService.getInteract(s);
 				//对list去重
 				for(int k=0;k<list.size();k++)
 				{
-					if(!isList(listall,list.get(k)))
+					//插入边
+					int flag=0;
+					for(int m=0;m<edgelist.size();m++)
 					{
-						listcurrent.add(list.get(k));
-						Edge e=new Edge();
-						e.setSource(Integer.parseInt(s));
-						e.setTarget(Integer.parseInt(list.get(k)));
-						e.setWeight(1);
-						edgelist.add(e);
+						if(edgelist.get(m).getSource().equals(list.get(k).getSource())&&edgelist.get(m).getTarget().equals(list.get(k).getTarget())||edgelist.get(m).getSource().equals(list.get(k).getTarget())&&edgelist.get(m).getTarget().equals(list.get(k).getSource()))
+						{
+							flag=1;
+							break;
+						}
+					}
+					if(flag==0)
+					{
+//						Edge e=new Edge();
+//						e.setSource(Integer.parseInt(s));
+//						e.setTarget(Integer.parseInt(list.get(k)));
+//						e.setWeight(1);
+						list.get(k).setWeight(1);
+						edgelist.add(list.get(k));
+					}
+					if(!isList(listall,String.valueOf(list.get(k).getSource())))
+					{
+						listcurrent.add(String.valueOf(list.get(k).getSource()));
+						listall.add(String.valueOf(list.get(k).getSource()));
+					}
+					if(!isList(listall,String.valueOf(list.get(k).getTarget())))
+					{
+						listcurrent.add(String.valueOf(list.get(k).getTarget()));
+						listall.add(String.valueOf(list.get(k).getTarget()));
 					}
 				}
 			}
-			nodemap.put(String.valueOf(i), listcurrent);
-			for(int j=0;j<listcurrent.size();j++)
-				listall.add(listcurrent.get(j));
+			nodelist.add(listcurrent);
+//			for(int j=0;j<listcurrent.size();j++)
+//				listall.add(listcurrent.get(j));
 		}
-		map.put("nodes",nodemap);
+		map.put("nodes",nodelist);
 		map.put("edges", edgelist);
 		ObjectMapper mapper=new ObjectMapper();
 		mapper.writeValueAsString(map);
@@ -85,5 +105,11 @@ public class PersonController {
 				return true;
 		}
 		return false;
+	}
+	
+	@RequestMapping(value ="/getAllInformation",method = RequestMethod.POST)
+	@ResponseBody
+	public Map getAllInformation(HttpServletRequest req, HttpServletResponse resp) throws JsonGenerationException, JsonMappingException, IOException{
+		
 	}
 }

@@ -1,3 +1,5 @@
+var nodesizeMin=3;//图节点尺寸最小值
+var nodesizeMax=10;//图节点尺寸最大值
 /***************************************用户信息****************************/
 //获取用户基本信息
 function getUserBasicInfo(){
@@ -5,8 +7,30 @@ function getUserBasicInfo(){
 	var div_searchinfo="<div id='searchinfo' style='margin-left:10px; margin-top:10px' >" +
 	                       "节点id <input class='txt_id' type='text'/>&nbsp&nbsp&nbsp"+
 	                       "<button id='btn_searchinfo' type='button' onclick='getUserInfo()'>查询</button>&nbsp&nbsp&nbsp"
-			           "</div>"
+			           "</div>"+
+	                   "<div id='comm_graph' style='width:700px; height:520px; float:left;'></div>"+
+		               "<div id='comm_info' style='width:300px; height:520px; float:left; margin-left:15px; font-size:15px; color:blue'>" +
+		                   "<p id='p_email'></p>"+
+		                   "<p id='p_location'></p>"+
+		                   "<p id='sex'></p>"+
+		               "</div>";
     $("#grid_10").append(div_searchinfo);
+    //显示所有用户地域分布
+    getAllInformation();
+}
+function getAllInformation(){
+	$.ajax({
+		url :"../../Person/getAllInformation",
+		data:{
+			id:id,
+			cengshu:cengshu
+		},
+		type : 'post',
+		async: false,
+		success : function(data){
+			
+		}
+	});
 }
 /***************************************社交网络****************************/
 //好友网络
@@ -15,9 +39,149 @@ function getFriendNetwork(){
 	var div_interactnetwork="<div id='div_interactnetwork' style='margin-left:10px; margin-top:10px' >" +
 	                       "节点id <input id='txt_id' type='text'/>&nbsp&nbsp&nbsp"+
 	                       "层数 <input id='txt_cengshu' type='text'/>&nbsp&nbsp&nbsp"+
-	                       "<button id='btn_interactnetwork' type='button' onclick='DrawInteractNetwork()'>查询</button>&nbsp&nbsp&nbsp"
+	                       "<button id='btn_interactnetwork' type='button' onclick='DrawFriendsNetwork()'>查询</button>&nbsp&nbsp&nbsp"
 			           "</div>"
     $("#grid_10").append(div_interactnetwork);
+}
+function DrawFriendsNetwork(){
+	var id=$("#txt_id").val();
+	var cengshu=$("#txt_cengshu").val();
+	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
+    $("#grid_10").append(maingraph_div);
+	$.ajax({
+		url :"../../Person/getInteract",
+		data:{
+			id:id,
+			cengshu:cengshu
+		},
+		type : 'post',
+		async: false,
+		success : function(data){
+			var categories=new Array();
+			var legend=new Array();
+			var nodes=new Array();
+			var links=new Array();
+			for(var i=0;i<data.nodes.length;i++){
+				categories[i]={
+			            "name": "第"+String(i)+"层",
+			            "keyword": {},
+			            "base": "第"+String(i)+"层"
+			        };
+				legend[i]="第"+String(i)+"层";
+				for(var j=0;j<data.nodes[i].length;j++){
+					var node=new Object();
+					node.name=data["nodes"][i][j];
+					node.size=1;
+					node.value=1;
+					node.category=i;
+					nodes[nodes.length]=node;	
+				}
+			}
+			for(var i=0;i<data.edges.length;i++){
+				var link=new Object();
+				link.source=String(data.edges[i].source);
+				link.target=String(data.edges[i].target);
+				link.weight=data.edges[i].weight;
+				links[links.length]=link;
+			}
+			//links=data.edges;
+			var myChart = echarts.init(document.getElementById('main'));
+		    option = {
+				title : {
+					text : '好友网络图',
+					x : 'center',
+					y : 'bottom'
+				},
+				legend : {
+				    data : legend,
+				    orient : 'vertical',
+				    x : 'left'
+				},
+				tooltip : {
+					trigger : 'item',
+					formatter : "{b}"
+				},
+				backgroundColor:'#DCDCDC',
+				toolbox : {
+					show : true,
+					feature : {
+						restore : {
+							show : true
+						},
+						magicType : {
+							show : true,
+							type : [ 'force', 'chord' ],
+							option : {
+								chord : {
+									minRadius : 2,
+									maxRadius : 10,
+									ribbonType : false,
+									itemStyle : {
+										normal : {
+											label : {
+												show : true,
+												rotate : true
+											},
+											chordStyle : {
+												opacity : 0.2
+											}
+										}
+									}
+								},
+								force : {
+									minRadius : 10,
+									maxRadius : 20,
+									itemStyle : {
+										normal : {
+											label : {
+												show : false
+											},
+											linkStyle : {
+												opacity : 3
+											}
+										}
+									}
+								}
+							}
+						},
+						saveAsImage : {
+							show : true
+						}
+					}
+				},
+				noDataEffect : 'none',
+				series : [ {
+					// FIXME No data
+					type : 'force',
+				} ],
+			};
+
+			option.series[0] = {
+				type : 'force',
+				name : 'webkit-dep',
+				itemStyle : {
+					normal : {
+						linkStyle : {
+							opacity : 3
+						}
+					}
+				},
+				categories : categories,
+				nodes : nodes,
+				links : links,
+				minRadius : nodesizeMin,
+				maxRadius : nodesizeMax,
+				gravity : 1.1,
+				scaling : 1.1,
+				steps : 20,
+				large : true,
+				useWorker : true,
+				coolDown : 0.995,
+				ribbonType : false,
+			};
+			myChart.setOption(option);
+		}
+	});
 }
 //交互网络
 function getInteractNetwork(){
@@ -41,25 +205,36 @@ function DrawInteractNetwork(){
 			cengshu:cengshu
 		},
 		type : 'post',
-		async: true,
+		async: false,
 		success : function(data){
 			var categories=new Array();
 			var legend=new Array();
 			var nodes=new Array();
 			var links=new Array();
-			for(var i=0;i<data["nodes"].length;i++){
+			for(var i=0;i<data.nodes.length;i++){
 				categories[i]={
 			            "name": "第"+String(i)+"层",
 			            "keyword": {},
 			            "base": "第"+String(i)+"层"
 			        };
 				legend[i]="第"+String(i)+"层";
-				for(var j=0;j<data["nodes"][i].length;j++){
-					nodes[nodes.length]=data["nodes"][i][j];
-					
+				for(var j=0;j<data.nodes[i].length;j++){
+					var node=new Object();
+					node.name=data["nodes"][i][j];
+					node.size=1;
+					node.value=1;
+					node.category=i;
+					nodes[nodes.length]=node;	
 				}
 			}
-			links=data["edges"];
+			for(var i=0;i<data.edges.length;i++){
+				var link=new Object();
+				link.source=String(data.edges[i].source);
+				link.target=String(data.edges[i].target);
+				link.weight=data.edges[i].weight;
+				links[links.length]=link;
+			}
+			//links=data.edges;
 			var myChart = echarts.init(document.getElementById('main'));
 		    option = {
 				title : {
@@ -142,8 +317,8 @@ function DrawInteractNetwork(){
 					}
 				},
 				categories : categories,
-				nodes : tiaoshufenjie_nodes,
-				links : tiaoshufenjie_links,
+				nodes : nodes,
+				links : links,
 				minRadius : nodesizeMin,
 				maxRadius : nodesizeMax,
 				gravity : 1.1,
@@ -169,7 +344,7 @@ function CommunityDetection(){
 	$("#grid_10").empty();
 	var div_operateall="<div style='margin-left:10px; margin-top:10px' class='operate_all'>"
 	+"种子集 <input class='txt_seedset' type='text' style='width:100px;height:18px'/>&nbsp&nbsp&nbsp"
-	+"<button class='btn_conntction' style='width:60px;height:22px' type='button' onclick='getConnection()'>连通图</button>&nbsp&nbsp&nbsp"
+	+"<button class='btn_conntction' style='width:80px;height:22px' type='button' onclick='getConnection()'>种子集处理</button>&nbsp&nbsp&nbsp"
 	+"</div>";
 	$("#grid_10").append(div_operateall);
 	//var p_seedset="<p>种子集</p>";

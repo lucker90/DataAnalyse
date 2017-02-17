@@ -16,8 +16,8 @@ function Search(){
 	//清楚页面内容
 	$("#grid_10").empty();
 	var div_operateall="<div style='background:white; width: 100%; height:560px' class='operate_all'>"+
-	                       "<div style='margin:auto; height=100px; position: absolute; left:400px; top:400px;'>"+
-	                           "<input  size='30' style='width:200px; height=80px;'class='txt_search' type='text'/>&nbsp&nbsp&nbsp"+
+	                       "<div style='margin:auto; height=150px; position: absolute; left:400px; top:400px;'>"+
+	                           "<input  size='30' style='width:200px; height=120px;'class='txt_search' type='text'/>&nbsp&nbsp&nbsp"+
 	                           "<button class='btn_search' type='button' onclick='doSearch()'>搜索</button>"+
 	                       "</div>"+
 	                   "</div>";

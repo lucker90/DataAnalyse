@@ -9,15 +9,16 @@ import org.springframework.stereotype.Service;
 
 import com.buaa.lucker.dao.MessageDao;
 import com.buaa.lucker.dao.PersonDao;
+import com.buaa.lucker.pojo.Edge;
 
 @Service("PersonService") 
 public class PersonService {
 	@Resource  
     private PersonDao personDao;
 	
-	public List<String> getInteract(String id)
+	public List<Edge> getInteract(String id)
 	{
-		List<String> result=new ArrayList<String>();
+		List<Edge> result=new ArrayList<Edge>();
 		result=personDao.getInteractDao(id);
 		return result;
 	}

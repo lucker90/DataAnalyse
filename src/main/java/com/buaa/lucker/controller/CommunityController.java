@@ -1946,7 +1946,7 @@ public class CommunityController {
 			resultList.add(node);
 		}
 		Collections.sort(resultList);
-		System.out.println("各个节点pagerank值为：");
+		//System.out.println("各个节点pagerank值为：");
 		for (int i=0;i<resultList.size();i++)
 		{
 		    System.out.println(resultList.get(i).getIdentifier()+","+resultList.get(i).getRank());
@@ -1970,6 +1970,7 @@ public class CommunityController {
     	//ComputeSimilarity com=new ComputeSimilarity();
     	
     	//先计算交互相似性 并对其归一化
+    	System.out.println("交互特征......");
     	HashMap<String, Double> interact = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
@@ -1981,7 +1982,7 @@ public class CommunityController {
     		}
     		Double countInter=getInterCount(key,seeds);//该节点跟种子集的交互总次数
     		interact.put(key, countInter);//写入交互记录的map中
-    		System.out.println("节点"+key+"和种子集的交互向量："+countInter);
+    		//System.out.println("节点"+key+"和种子集的交互向量："+countInter);
     	}
     	Normalization(interact);//归一化
 //    	for(String key:interact.keySet())
@@ -1989,6 +1990,7 @@ public class CommunityController {
 //    	System.out.println();
     	//计算话题相似性
     	//System.out.println("种子集为"+seeds);
+    	System.out.println("话题特征......");
     	HashMap<String, Double> topic = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
@@ -2000,13 +2002,14 @@ public class CommunityController {
     		}
     		Double countTopic=getTopicCount(key,seeds);//该节点跟种子集的交互总次数
     		topic.put(key, countTopic);//写入交互记录的map中
-    		System.out.println("节点"+key+"和种子集的话题向量："+countTopic);
+    		//System.out.println("节点"+key+"和种子集的话题向量："+countTopic);
     	}
     	Normalization(topic);//归一化
 //    	for(String key:topic.keySet())
 //    		System.out.print(topic.get(key));
 //    	System.out.println();
     	//是否抄送过同一篇邮件
+    	System.out.println("抄送特征......");
     	HashMap<String, Double> sameEmail = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
@@ -2018,10 +2021,11 @@ public class CommunityController {
     		}
     		Double countSameEmail=getSameEmailCount(key,seeds);//该节点跟种子集的交互总次数
     		sameEmail.put(key, countSameEmail);//写入交互记录的map中
-    		System.out.println("节点"+key+"和种子集的抄送同一篇邮件："+countSameEmail);
+    		//System.out.println("节点"+key+"和种子集的抄送同一篇邮件："+countSameEmail);
     	}
     	Normalization(sameEmail);//归一化
     	//是否相邻并联系紧密
+    	System.out.println("直接交互特征......");
     	HashMap<String, Double> IsCloser = new HashMap<String, Double>();
     	for(String key : lastRanking.keySet())
     	{
@@ -2033,7 +2037,7 @@ public class CommunityController {
     		}
     		Double countIsCloser=getIsCloserCount(key,seeds);//该节点跟种子集的交互总次数
     		IsCloser.put(key, countIsCloser);//写入交互记录的map中
-    		System.out.println("节点"+key+"和种子集的是否相邻并联系紧密："+countIsCloser);
+    		//System.out.println("节点"+key+"和种子集的是否相邻并联系紧密："+countIsCloser);
     	}
     	Normalization(IsCloser);//归一化
     	//对所有特征进行合并并归一化
