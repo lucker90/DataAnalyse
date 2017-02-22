@@ -1,36 +1,136 @@
 var nodesizeMin=3;//图节点尺寸最小值
 var nodesizeMax=10;//图节点尺寸最大值
 /***************************************用户信息****************************/
+var userInnfo=new Array();
 //获取用户基本信息
 function getUserBasicInfo(){
 	$("#grid_10").empty();
 	var div_searchinfo="<div id='searchinfo' style='margin-left:10px; margin-top:10px' >" +
-	                       "节点id <input class='txt_id' type='text'/>&nbsp&nbsp&nbsp"+
-	                       "<button id='btn_searchinfo' type='button' onclick='getUserInfo()'>查询</button>&nbsp&nbsp&nbsp"
+	                       "节点id <input id='txt_id' type='text'/>&nbsp&nbsp&nbsp"+
+	                       "<button id='btn_searchinfo' type='button' onclick='getUserInfo()'>查询</button>&nbsp&nbsp&nbsp"+
 			           "</div>"+
 	                   "<div id='comm_graph' style='width:700px; height:520px; float:left;'></div>"+
 		               "<div id='comm_info' style='width:300px; height:520px; float:left; margin-left:15px; font-size:15px; color:blue'>" +
-		                   "<p id='p_email'></p>"+
+		                   "<p id='p_id'></p>"+
+		               	   "<p id='p_email'></p>"+
 		                   "<p id='p_location'></p>"+
-		                   "<p id='sex'></p>"+
+		                   "<p id='p_sex'></p>"+
 		               "</div>";
     $("#grid_10").append(div_searchinfo);
-    //显示所有用户地域分布
+    //显示所有用户信息
     getAllInformation();
+    //显示用户分布情况
+    showAllLocation();
 }
 function getAllInformation(){
 	$.ajax({
 		url :"../../Person/getAllInformation",
 		data:{
-			id:id,
-			cengshu:cengshu
 		},
 		type : 'post',
 		async: false,
 		success : function(data){
-			
+			userInfo=data.result;
 		}
 	});
+}
+function showAllLocation(){
+	//整理数据
+	var data=new Array();
+	var locations=["河北","山西","辽宁","吉林","黑龙江","江苏","浙江","安徽","福建","江西","山东","河南","湖北","湖南", "广东","广西","内蒙古","海南","四川","贵州","云南","陕西","甘肃","青海","台湾", 
+                   "北京","天津","上海","重庆", "西藏","宁夏", "新疆",  
+	               "香港", "澳门"];
+	for(var i=0;i<locations.length;i++){
+		var l=new Object;
+		l.name=locations[i];
+		l.value=0;
+		data[data.length]=l;
+	}
+	var count=0;
+	for(var i=0;i<userInfo.length;i++){
+		for(var j=0;j<locations.length;j++){
+			if(userInfo[i].location===locations[j]){
+				data[j].value=data[j].value+1;
+				count++;
+			}
+		}
+	}
+	var myChart = echarts.init(document.getElementById('comm_graph'));
+	option = {
+		    title : {
+		        text: '用户地域分布',
+		        subtext: '',
+		        x:'center'
+		    },
+		    tooltip : {
+		        trigger: 'item'
+		    },
+		    legend: {
+		        orient: 'vertical',
+		        x:'left',
+		        data:[]
+		    },
+		    dataRange: {
+		        min: 0,
+		        max: 160,
+		        x: 'left',
+		        y: 'bottom',
+		        text:['高','低'],           // 文本，默认为数值文本
+		        calculable : true
+		    },
+		    toolbox: {
+		        show: true,
+		        orient : 'vertical',
+		        x: 'right',
+		        y: 'center',
+		        feature : {
+		            mark : {show: true},
+		            dataView : {show: true, readOnly: false},
+		            restore : {show: true},
+		            saveAsImage : {show: true}
+		        }
+		    },
+		    roamController: {
+		        show: true,
+		        x: 'right',
+		        mapTypeControl: {
+		            'china': true
+		        }
+		    },
+		    series : [
+		        {
+		            name: '用户数目',
+		            type: 'map',
+		            mapType: 'china',
+		            roam: false,
+		            itemStyle:{
+		                normal:{label:{show:true}},
+		                emphasis:{label:{show:true}}
+		            },
+		            data:data
+		        },
+		    ]
+		};
+	myChart.setOption(option);
+}
+function getUserInfo(){
+	var id=$("#txt_id").val();;
+	var email;
+	var location;
+	var sex;
+	for(var i=0;i<userInfo.length;i++){
+		if(String(userInfo[i].id)===id){
+			email=userInfo[i].email;
+			location=userInfo[i].location;
+			sex=userInfo[i].sex;
+			break;
+		}
+	}
+	$("#p_id").html("用户ID:"+id);
+	$("#p_email").html("用户邮箱:"+email);
+	$("#p_location").html("用户地域:"+location);
+	$("#p_sex").html("用户性别:"+sex);
+	
 }
 /***************************************社交网络****************************/
 //好友网络
@@ -42,14 +142,17 @@ function getFriendNetwork(){
 	                       "<button id='btn_interactnetwork' type='button' onclick='DrawFriendsNetwork()'>查询</button>&nbsp&nbsp&nbsp"
 			           "</div>"
     $("#grid_10").append(div_interactnetwork);
+	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
+    $("#grid_10").append(maingraph_div);
 }
 function DrawFriendsNetwork(){
+	$('#main').remove();
 	var id=$("#txt_id").val();
 	var cengshu=$("#txt_cengshu").val();
 	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
     $("#grid_10").append(maingraph_div);
 	$.ajax({
-		url :"../../Person/getInteract",
+		url :"../../Person/getFriends",
 		data:{
 			id:id,
 			cengshu:cengshu
@@ -129,7 +232,7 @@ function DrawFriendsNetwork(){
 									}
 								},
 								force : {
-									minRadius : 10,
+									minRadius : 2,
 									maxRadius : 20,
 									itemStyle : {
 										normal : {
@@ -192,8 +295,11 @@ function getInteractNetwork(){
 	                       "<button id='btn_interactnetwork' type='button' onclick='DrawInteractNetwork()'>查询</button>&nbsp&nbsp&nbsp"
 			           "</div>"
     $("#grid_10").append(div_interactnetwork);
+	var cengshu=$("#txt_cengshu").val();
+	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
 }
 function DrawInteractNetwork(){
+	$('#main').remove();
 	var id=$("#txt_id").val();
 	var cengshu=$("#txt_cengshu").val();
 	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
@@ -338,6 +444,7 @@ var commData=null;
 var topcount=5;//显示top5
 var similaritycount=5;//显示跟种子集最相似的前5个节点
 var categoriescount=5;//五种分类
+
 //*****社区发现***********／
 function CommunityDetection(){
 	//切换界面至社区发现
@@ -426,12 +533,65 @@ function getBasicInfo()
 	                       "<p id='p_similarity_top5'></p>"+
 	                   "</div>";
 	$("#main").append(basicgraph_div);
-	//先为节点分类，一共三类，普通节点、重要节点、相似度高的节点
+	//先为节点分类，一共三类，普通节点、重要节点、相似度高的节点、既重要又相似、种子集点
+	var topArray=new Array();
+	var similarityArray=new Array();
 	var nodes=commData["nodes"];
 	var topnodes=commData["top"];
 	var similaritynodes=commData["similarity"];
 	var seedset=$(".txt_seedset").val().split(",");//种子节点
+	//将所有节点标为普通节点，区分种子节点
 	for(var i=0;i<nodes.length;i++){
+		nodes[i]["category"]=0;
+		for(var j=0;j<seedset.length;j++){
+			if(nodes[i]["name"]===seedset[j])
+				nodes[i]["category"]=4;
+		}
+	}
+	//标记重要节点
+	var count1=0;
+	for(var i=0;i<topnodes.length;){
+		var j=0;
+		for(j=0;j<nodes.length;j++){
+			if(nodes[j]["category"]==0&&nodes[j]["name"]===topnodes[i]["identifier"]){
+				nodes[j]["category"]=1;
+				topArray[topArray.length]=nodes[j]["name"];
+				count1++;
+				i++
+				break;
+			}
+		}
+		if(j==nodes.length)
+			i++;
+		if(count1==topcount)
+			break;
+	}
+	//标记相似节点
+	var count2=0;
+	for(var i=0;i<similaritynodes.length;){
+		var j=0;
+		for(j=0;j<nodes.length;j++){
+			if(nodes[j]["category"]==0&&nodes[j]["name"]===similaritynodes[i]["identifier"]){
+				nodes[j]["category"]=2;
+				similarityArray[similarityArray.length]=nodes[j]["name"];
+				count2++;
+				i++
+				break;
+			}
+			if(nodes[j]["category"]==1&&nodes[j]["name"]===similaritynodes[i]["identifier"]){
+				nodes[j]["category"]=3;
+				similarityArray[similarityArray.length]=nodes[j]["name"];
+				count2++;
+				i++;
+				break;
+			}
+		}
+		if(j==nodes.length)
+			i++;
+		if(count2==similaritycount)
+			break;
+	}
+	/*for(var i=0;i<nodes.length;i++){
 		var flagtop=0;
 		var flagsimi=0;
 		for(var j=1;j<topcount+1&&j<topnodes.length;j++){
@@ -458,7 +618,7 @@ function getBasicInfo()
 				break;
 			}
 		}
-	}
+	}*/
 	var categories=new Array(categoriescount);
 	categories[0]={
             "name": "普通节点",
@@ -586,14 +746,16 @@ function getBasicInfo()
 	$("#p_info").html("社区尺寸:&nbsp"+commData['size']);
 	//重要的前5个节点
 	var im_top5="<p>重要节点top5:</p>";
-	for(var i=1;i<topcount+1&&i<commData["top"].length;i++){
-		im_top5=im_top5+"<p style='margin-left:60px'>"+commData["top"][i]["identifier"]+"("+commData["top"][i]["rank"]+")"+"</p>";
+	for(var i=0;i<topArray.length;i++){
+//		im_top5=im_top5+"<p style='margin-left:60px'>"+commData["top"][i]["identifier"]+"("+commData["top"][i]["rank"]+")"+"</p>";
+		im_top5=im_top5+"<p style='margin-left:60px'>"+topArray[i]+"</p>";
 	}
 	$("#p_important_top5").html(im_top5);
 	//相似度最高的5个节点
 	var si_top5="<p>与种子集相似度top5:</p>";
-	for(var i=1;i<similaritycount+1&&i<commData["similarity"].length;i++){
-		si_top5=si_top5+"<p style='margin-left:60px'>"+commData["similarity"][i]["identifier"]+"("+commData["similarity"][i]["rank"]+")"+"</p>";
+	for(var i=0;i<similarityArray.length;i++){
+//		si_top5=si_top5+"<p style='margin-left:60px'>"+commData["similarity"][i]["identifier"]+"("+commData["similarity"][i]["rank"]+")"+"</p>";
+		si_top5=si_top5+"<p style='margin-left:60px'>"+similarityArray[i]+"</p>";
 	}
 	$("#p_similarity_top5").html(si_top5);
 }

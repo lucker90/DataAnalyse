@@ -88,7 +88,7 @@ public class MessageController {
 		{	
 			String source=String.valueOf(messages.get(i).getSenderid());
 			String target=String.valueOf(messages.get(i).getRecipientid());
-			System.out.println(source+","+target);
+			//System.out.println(source+","+target);
 			//List<Map> listt=new ArrayList<Map>();
 			//添加边
 			int flag=0;
@@ -123,7 +123,9 @@ public class MessageController {
 		{
 			String source=(String) links.get(i).get("source");
 			String target=(String) links.get(i).get("target");
-			double weight=(double) links.get(i).get("weight");
+			//System.out.println(source+","+target+","+links.get(i).get("weight"));
+			//double weight=(double) links.get(i).get("weight");
+			double weight=1.0;
 			int flag1=0;
 			int flag2=0;
 			for(int j=0;j<nodes.size();j++)
@@ -160,9 +162,14 @@ public class MessageController {
 				t.put("name", target);
 				t.put("value", 1.0);
 				t.put("size", 1.0);
+				t.put("category", 0);
 				nodes.add(t);
 			}
 		}
+//		for(int j=0;j<nodes.size();j++)
+//		{
+//			System.out.println(nodes.get(j).get("name")+":"+nodes.get(j).get("value")+":"+nodes.get(j).get("size"));
+//		}
 		resultMap.put("nodes", nodes);
 		resultMap.put("links", links);
 		

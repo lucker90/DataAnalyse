@@ -747,8 +747,10 @@ public class CommunityController {
 		//for (int i = 0; i < seedsNode.size()&&i<0; i++)////// 添加邻居1/2的节点
 		for (int i = 0; i < seedsNode.size() ; i++)////// 添加邻居1/2的节点，最终选取节点的一半
 		{
-			if (!result.contains(seedsNode.get(i).getIdentifier()))
-				result.add(seedsNode.get(i).getIdentifier());
+			if(seedsNode.get(i).getRank()>5){
+				if (!result.contains(seedsNode.get(i).getIdentifier()))
+					result.add(seedsNode.get(i).getIdentifier());
+			}
 		}
 		// 再把初始种子集点添加进去
 		for (int i = 0; i < SubSeed.size(); i++) {
@@ -910,25 +912,32 @@ public class CommunityController {
 
 			if (isConnected(SubSeed, Variable.getAllnode())) {
 				System.out.println("导率为：" + String.valueOf(conductance));
+				System.out.println("种子集目前尺寸：" + SubSeed.size());
 				conList.add(String.valueOf(conductance));
 				List<String> comm = new ArrayList<String>();
 				for (int j = 0; j < SubSeed.size(); j++)
 					comm.add(SubSeed.get(j));
 				community.add(comm);
 			}
-			System.out.println("种子集目前尺寸：" + SubSeed.size());
+			
 			//}
 		}
 		// System.out.println("种子集目前尺寸："+SubSeed.size());
 		////// 寻找最优社区
 		System.out.println(conList);
-		double minCons = 1.0;
-		List<String> bestComm = community.get(0);
-		int count = 0;
-		int size = 100;
+		double minCons=1.0;
+		List<String> bestComm=community.get(0);
+//		if(community.size()>100){
+//			minCons = Double.parseDouble(conList.get(100));
+//			bestComm = community.get(100);
+//		}
+
+		//int count = 0;
+		//int size = 100;
 		for (int i = 0; i < conList.size(); i++) {
 			// 选取导率最小的社区//////////////////
 			if (Double.parseDouble(conList.get(i)) <= minCons&&community.get(i).size()>=100&&community.get(i).size()<=300) {
+			//if (Double.parseDouble(conList.get(i)) <= minCons){
 				System.out.println(minCons);
 				minCons = Double.parseDouble(conList.get(i));
 				bestComm = community.get(i);
@@ -958,7 +967,9 @@ public class CommunityController {
 
 			double weight = 0;
 			for (MapEntry entry : SubGraph.get(bestComm.get(i))) {
-				weight = weight + entry.getWeight();
+//				weight = weight + entry.getWeight();
+				if(isSeed(bestComm,entry.getIdentifier()))
+					weight = weight + 1.0;
 			}
 			mapt.put("value", weight);
 			mapt.put("size", weight);
@@ -1042,8 +1053,8 @@ public class CommunityController {
 		System.out.println("社区的查准率为：" + p);
 		System.out.println("社区的查全率为：" + r);
 		System.out.println("社区的f1指标为：" + f1);
-		System.out.println("社区的NMI指标为：" + NMI);
-		System.out.println("种子集对应的连通图" + SubNodes.size());
+		//System.out.println("社区的NMI指标为：" + NMI);
+		//System.out.println("种子集对应的连通图" + SubNodes.size());
 		resultMap.put("f1", f1);
 	}
 

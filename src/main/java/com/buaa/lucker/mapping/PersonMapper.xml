@@ -6,10 +6,28 @@
     <result column="target" property="target" jdbcType="INTEGER" />
     <result column="count" property="weight" jdbcType="INTEGER" />
   </resultMap>
-  <select id="getInteractDao"  parameterType="java.lang.String" resultMap="BaseResultMap">
+  <resultMap id="InfoMap" type="com.buaa.lucker.pojo.person" >
+    <id column="personid" property="id" jdbcType="INTEGER" />
+    <result column="location" property="location" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="VARCHAR" />
+     <result column="email" property="email" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="getInteractDao"  parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select distinct recipientid as source,senderid as target from edgemap where recipientid=#{0}
     union
     select distinct senderid as source,recipientid as target from edgemap where senderid=#{0}
+  </select>
+  
+  <select id="getFriendsDao"  parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select distinct id1 as source,id2 as target from friendship where id1=#{0}
+    union
+    select distinct id2 as source,id1 as target from friendship where id2=#{0}
+  </select>
+  
+  <select id="getInformation"  parameterType="java.lang.String" resultMap="InfoMap">
+    select personid,location,sex,email
+    from people 
+    where personid in(select id from tb_count)
   </select>
   
   

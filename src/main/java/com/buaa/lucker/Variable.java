@@ -26,10 +26,10 @@ public class Variable {
 //	public static double wOfTopic=0.6112;
 //	public static double wOfSameEamil=0.1141;
 //	public static double wOfIsCloser=0.0763;
-	public static double wOfInteract=0.4;
-	public static double wOfTopic=0.4;
-	public static double wOfSameEamil=0.1;
-	public static double wOfIsCloser=0.1;
+	public static double wOfInteract=0.25;
+	public static double wOfTopic=0.25;
+	public static double wOfSameEamil=0.25;
+	public static double wOfIsCloser=0.25;
 	public static double getDis()
 	{
 		return dis;

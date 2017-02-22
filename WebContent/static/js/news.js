@@ -230,9 +230,8 @@ var timefenjie_huanyuan_nodes=new Array();
 var timefenjie_huanyuan_links=new Array();
 var timefenjie_huanyuan_categories=new Array();
 var timefenjie_huanyuan_legenddata=new Array();
-/////按照跳数分解
-var tiaoshufenjie_current=0;
-var tiaoshu=1;//默认按照1跳进行分割
+
+/*var tiaoshu=1;//默认按照1跳进行分割
 var tiaoshufenjie_messagesqian=new Array();
 var tiaoshufenjie_messageshou=new Array();
 var tiaoshufenjie_messagesindex=0;
@@ -245,7 +244,7 @@ var tiaofenjie_huanyuan_messages=new Array();
 var tiaoshufenjie_huanyuan_nodes=new Array();
 var tiaoshufenjie_huanyuan_links=new Array();
 var tiaoshufenjie_huanyuan_categories=new Array();
-var tiaoshufenjie_huanyuan_legenddata=new Array();
+var tiaoshufenjie_huanyuan_legenddata=new Array();*/
 function fenjie_time(){
 	//先判断是否搜索了消息
 	if(message==null){
@@ -311,7 +310,12 @@ function timefenjie_next(){
 			var j=0;
 			for(j=0;j<timefenjie_messages.length;j++)
 			{
-				if(messages[i]["senderid"]===timefenjie_messages[j].source&&messages[i]["recipientid"]===timefenjie_messages[j].target)
+				if(String(messages[i]["senderid"])===timefenjie_messages[j].source&&String(messages[i]["recipientid"])===timefenjie_messages[j].target)
+				{
+					flag=1;
+					break;
+				}
+				if(String(messages[i]["senderid"])===timefenjie_messages[j].target&&String(messages[i]["recipientid"])===timefenjie_messages[j].source)
 				{
 					flag=1;
 					break;
@@ -352,26 +356,34 @@ function timefenjie_next(){
 			}
 		}
 		if(flagstart==1){
-			timefenjie_nodes[indexstart].size=timefenjie_nodes[indexstart].size+timefenjie_messages[i].weight;	
-			timefenjie_nodes[indexstart].value=timefenjie_nodes[indexstart].value+timefenjie_messages[i].weight;
+//			timefenjie_nodes[indexstart].size=timefenjie_nodes[indexstart].size+timefenjie_messages[i].weight;	
+//			timefenjie_nodes[indexstart].value=timefenjie_nodes[indexstart].value+timefenjie_messages[i].weight;
+			timefenjie_nodes[indexstart].size=timefenjie_nodes[indexstart].size+1;	
+			timefenjie_nodes[indexstart].value=timefenjie_nodes[indexstart].value+1;
 		}
 		if(flagend==1){
-			timefenjie_nodes[indexend].size=timefenjie_nodes[indexend].size+timefenjie_messages[i].weight;
-			timefenjie_nodes[indexend].value=timefenjie_nodes[indexend].value+timefenjie_messages[i].weight;
+//			timefenjie_nodes[indexend].size=timefenjie_nodes[indexend].size+timefenjie_messages[i].weight;
+//			timefenjie_nodes[indexend].value=timefenjie_nodes[indexend].value+timefenjie_messages[i].weight;
+			timefenjie_nodes[indexend].size=timefenjie_nodes[indexend].size+1;
+			timefenjie_nodes[indexend].value=timefenjie_nodes[indexend].value+1;
 		}
 		if(flagstart==0){
 			var node=new Object();
 			node.name=timefenjie_messages[i].source;
-			node.size=timefenjie_messages[i].weight;
-			node.value=timefenjie_messages[i].weight;
+//			node.size=timefenjie_messages[i].weight;
+//			node.value=timefenjie_messages[i].weight;
+			node.size=1;
+			node.value=1;
 			node.category=timefenjie_current-1;
 			timefenjie_nodes[timefenjie_nodes.length]=node;
 		}
 		if(flagend==0){
 			var node=new Object();
 			node.name=timefenjie_messages[i].target;
-			node.size=timefenjie_messages[i].weight;
-			node.value=timefenjie_messages[i].weight;
+//			node.size=timefenjie_messages[i].weight;
+//			node.value=timefenjie_messages[i].weight;
+			node.size=1;
+			node.value=1;
 			node.category=timefenjie_current-1;
 			timefenjie_nodes[timefenjie_nodes.length]=node;
 		}
@@ -389,10 +401,21 @@ function timefenjie_next(){
 		timefenjie_huanyuan_links=new Array();
 		timefenjie_huanyuan_categories=new Array();
 		timefenjie_huanyuan_legenddata=new Array();
-		for(var i=0;i<timefenjie_nodes.length;i++)
-			timefenjie_huanyuan_nodes[i]=timefenjie_nodes[i];
-		for(var i=0;i<timefenjie_links.length;i++)
-			timefenjie_huanyuan_links[i]=timefenjie_links[i];
+		for(var i=0;i<timefenjie_nodes.length;i++){
+			var node=new Object();
+			node.name=timefenjie_nodes[i].name;
+			node.size=timefenjie_nodes[i].size;
+			node.value=timefenjie_nodes[i].value;
+			node.category=timefenjie_nodes[i].category
+			timefenjie_huanyuan_nodes[i]=node;
+		}	
+		for(var i=0;i<timefenjie_links.length;i++){
+			var message=new Object();
+		    message.source=timefenjie_links[i].source;
+		    message.target=timefenjie_links[i].target;
+		    message.weight=timefenjie_links[i].weight;
+		    timefenjie_huanyuan_links[i]=message;
+		}	
 		for(var i=0;i<timefenjie_categories.length;i++)
 			timefenjie_huanyuan_categories[i]=timefenjie_categories[i];
 		for(var i=0;i<timefenjie_legenddata.length;i++)
@@ -662,7 +685,427 @@ function timefenjie_huanyuan(){
 	$("#timefenjie_next").show();
 	
 }
+/////按照跳数分解
+var tiaoshufenjie_current=0;
+var tiaoshufenjie_flagArray=new Array();
+var tiaoshufenjie_nodes=new Array();
+var tiaoshufenjie_links=new Array();
+var tiaoshufenjie_categories=new Array();
+var tiaoshufenjie_legenddata=new Array();
+var tiaoshufenjie_currentceng=new Array();
+//还原参数
+var tiaoshufenjie_huanyuan_flagArray=new Array();
+var tiaoshufenjie_huanyuan_nodes=new Array();
+var tiaoshufenjie_huanyuan_links=new Array();
+var tiaoshufenjie_huanyuan_categories=new Array();
+var tiaoshufenjie_huanyuan_legenddata=new Array();
+var tiaoshufenjie_huanyuan_currentceng=new Array();
 function fenjie_tiaoshu(){
+	//先判断是否搜索了消息
+	if(message==null){
+		alert("请先搜索消息");
+		top.location='NewsTransmission.html';
+	}
+	else{
+		//对flag数组进行初始化为0
+		for(var i=0;i<messagesNodes.length;i++)
+			tiaoshufenjie_flagArray[i]=0;
+		for(var i=0;i<messagesNodes.length;i++)
+			tiaoshufenjie_huanyuan_flagArray[i]=0;
+		//清除页面内容
+		$("#grid_10").empty();
+		var div_drawinfo="<div id='messinfo' style='margin-left:10px; margin-top:10px' >" +
+                             "<p id='p_messinfo'></p><p id='p_tiaoshurange'></p>"+
+                         "</div>"+
+                         "<div id='div_messfennjie' style='margin-left:10px; margin-top:10px' >" +
+                             "按跳数分解分解 "+
+                             "<button id='btn_drawmess' type='button' onclick='draw_tiaoshufenjie()'>分解</button>&nbsp&nbsp&nbsp"
+                         "</div>"
+        $("#grid_10").append(div_drawinfo);
+	}
+}
+function draw_tiaoshufenjie(){
+	tiaoshufenjie_current=0;
+	tiaoshufenjie_nodes=[];
+	tiaoshufenjie_links=[];
+	tiaoshufenjie_categories=[];
+	tiaoshufenjie_legenddata=[];
+	tiaoshufenjie_currentceng=[];
+	for(var i=0;i<messagesNodes.length;i++)
+		tiaoshufenjie_flagArray[i]=0;
+	
+	tiaoshufenjie_huanyuan_nodes=[];
+	tiaoshufenjie_huanyuan_links=[];
+	tiaoshufenjie_huanyuan_categories=[];
+	tiaoshufenjie_huanyuan_legenddata=[];
+	tiaoshufenjie_huanyuan_currentceng=[];
+	for(var i=0;i<messagesNodes.length;i++)
+		tiaoshufenjie_huanyuan_flagArray[i]=0;
+	$("#main").remove();
+	var maingraph_div="<div id='main' style='width: 100%;height:600px;'></div>";
+    $("#grid_10").append(maingraph_div);
+	var basicgraph_div="<div id='tiaoshufenjie_graph' style='width:700px; height:500px; float:left;'></div>"+
+	                   "<div id='tiaoshufenjie_button' style='width:300px; height:500px; float:left; margin-left:15px; font-size:15px; color:blue'>" +
+	                       "<button id='tiaoshufenjie_next' type='button' onclick='tiaoshufenjie_next()'>下一步</button>&nbsp&nbsp&nbsp" +
+	                       "<button id='tiaoshufenjie_huanyuan' type='button' onclick='tiaoshufenjie_huanyuan()'>还原</button>&nbsp&nbsp&nbsp" +
+	                   "</div>";
+	$("#main").append(basicgraph_div);
+	if(	tiaoshufenjie_current==0){
+		// 找时间最早的几个节点，第一步没有边
+		tiaoshufenjie_current++;
+		var time = messages[0].time;
+		var nodeout = new Object;
+		nodeout.name = String(messages[0].senderid);
+		nodeout.size = 0;
+		nodeout.value = 0;
+		nodeout.category=tiaoshufenjie_current-1;
+		tiaoshufenjie_nodes[tiaoshufenjie_nodes.length] = nodeout;
+		tiaoshufenjie_currentceng[tiaoshufenjie_currentceng.length]=String(messages[0].senderid);
+		tiaoshufenjie_flagArray[findIndex(messages[0].senderid)] = 1;
+		for (var i = 0; i < messages.length; i++) {
+			if (messages[i].time === time&& inArray(messages[i].senderid, tiaoshufenjie_nodes) == -1) {
+				var node = new Object;
+				node.name = String(messages[i].senderid);
+				node.size = 0;
+				node.value = 0;
+				nodeout.category=tiaoshufenjie_current-1
+				tiaoshufenjie_nodes[tiaoshufenjie_nodes.length] = node;
+				//当前层节点加入
+				tiaoshufenjie_currentceng[tiaoshufenjie_currentceng.length]=String(messages[i].senderid);
+				// 将标记位设置成已加入
+				tiaoshufenjie_flagArray[findIndex(messages[i].senderid)] = 1;
+			}
+			if (messages[i].time !== time)
+				break;
+		}
+		tiaoshufenjie_categories[tiaoshufenjie_categories.length] = {
+			"name" : "第" + (tiaoshufenjie_current - 1) + "步",
+			"keyword" : {},
+			"base" : "第" + (tiaoshufenjie_current - 1) + "步"
+		};
+		tiaoshufenjie_legenddata[tiaoshufenjie_legenddata.length] = "第"
+				+ (tiaoshufenjie_current - 1) + "步";
+		drawGraph();// 绘图
+		// 对还原的变量进行记录
+		tiaoshufenjie_huanyuan_nodes = [];
+		tiaoshufenjie_huanyuan_links = [];
+		tiaoshufenjie_huanyuan_categories = [];
+		tiaoshufenjie_huanyuan_legenddata = [];
+		tiaoshufenjie_huanyuan_currentceng=[];
+		for (var i = 0; i < tiaoshufenjie_nodes.length; i++) {
+			var node = new Object();
+			node.name = tiaoshufenjie_nodes[i].name;
+			node.size = tiaoshufenjie_nodes[i].size;
+			node.value = tiaoshufenjie_nodes[i].value;
+			node.category = tiaoshufenjie_nodes[i].category;
+			tiaoshufenjie_huanyuan_nodes[i] = node;
+		}
+		for (var i = 0; i < tiaoshufenjie_links.length; i++) {
+			var message = new Object();
+			message.source = tiaoshufenjie_links[i].source;
+			message.target = tiaoshufenjie_links[i].target;
+			message.weight = tiaoshufenjie_links[i].weight;
+			tiaoshufenjie_huanyuan_links[i] = message;
+		}
+		for (var i = 0; i < tiaoshufenjie_categories.length; i++)
+			tiaoshufenjie_huanyuan_categories[i] = tiaoshufenjie_categories[i];
+		for (var i = 0; i < tiaoshufenjie_legenddata.length; i++)
+			tiaoshufenjie_huanyuan_legenddata[i] = tiaoshufenjie_legenddata[i];
+		for (var i = 0; i < tiaoshufenjie_currentceng.length; i++)
+			tiaoshufenjie_huanyuan_currentceng[i] = tiaoshufenjie_currentceng[i];
+		for (var i = 0; i < tiaoshufenjie_flagArray.length; i++)
+			tiaoshufenjie_huanyuan_flagArray[i] = tiaoshufenjie_flagArray[i];
+	}
+	else{
+		tiaoshufenjie_next();
+	}
+}
+function tiaoshufenjie_next(){
+	tiaoshufenjie_current++;
+	var currentceng=new Array();
+	for(var i=0;i<tiaoshufenjie_currentceng.length;i++){
+		for(var j=0;j<messagesNodes.length;j++){
+			if(tiaoshufenjie_flagArray[j]==0){//未访问过
+				//看是否是同层的
+				for(var k=0;k<messagesLinks.length;k++){
+					if(tiaoshufenjie_currentceng[i]===messagesLinks[k].source&&messagesNodes[j].name===messagesLinks[k].target||tiaoshufenjie_currentceng[i]===messagesLinks[k].target&&messagesNodes[j].name===messagesLinks[k].source){
+						//新建边加1；节点+1，新建节点并将访问为设为1
+						//边
+						var link=new Object();
+						link.source=messagesLinks[k].source;
+						link.target=messagesLinks[k].target;
+						link.weight=messagesLinks[k].weight;
+						tiaoshufenjie_links[tiaoshufenjie_links.length]=link;
+						//节点+1
+						var index1=inArray(tiaoshufenjie_currentceng[i],tiaoshufenjie_nodes);
+						tiaoshufenjie_nodes[index1].size=tiaoshufenjie_nodes[index1].size+1;
+						tiaoshufenjie_nodes[index1].value=tiaoshufenjie_nodes[index1].value+1;
+//						var flag=0;
+//						for(var n=0;n<tiaoshufenjie_currentceng.length;n++){
+//							if(messagesNodes[j].name===tiaoshufenjie_currentceng[n]){
+//								flag=1;
+//								break;
+//							}
+//						}
+//						if(flag==0){
+						//添加节点
+						var node=new Object();
+						node.name=messagesNodes[j].name;
+						node.size=1;
+						node.value=1;
+						node.category=tiaoshufenjie_current-1;
+						tiaoshufenjie_nodes[tiaoshufenjie_nodes.length]=node;
+						tiaoshufenjie_flagArray[j]=1;
+						currentceng[currentceng.length]=messagesNodes[j].name;	
+//						}
+//						else{
+//							var index2=inArray(messagesNodes[j].name,tiaoshufenjie_nodes);
+//							tiaoshufenjie_nodes[index2].size=tiaoshufenjie_nodes[index2].size+1;
+//							tiaoshufenjie_nodes[index2].value=tiaoshufenjie_nodes[index2].value+1;
+//						}
+					}
+				}
+			}
+			//如果是同层的,并且访问过
+			/*else{
+				//看是否是同层的
+				var flag=0;
+				for(var n=0;n<tiaoshufenjie_currentceng.length;n++){
+					if(messagesNodes[j].name===tiaoshufenjie_currentceng[n]){
+						flag=1;
+						break;
+					}
+				}
+				//同层
+				if(flag==1){
+					var link=new Object();
+					link.source=tiaoshufenjie_currentceng[i];
+					link.target=messagesNodes[j].name;
+					for(var k=0;k<messagesLinks.length;k++){
+						if(tiaoshufenjie_currentceng[i]===messagesLinks[k].source&&messagesNodes[j].name===messagesLinks[k].target||tiaoshufenjie_currentceng[i]===messagesLinks[k].target&&messagesNodes[j].name===messagesLinks[k].source){
+							link.weight=messagesLinks[k].weight;
+						}
+					}
+					tiaoshufenjie_links[tiaoshufenjie_links.length]=link;
+				}
+			}*/
+		}
+	}
+	tiaoshufenjie_categories[tiaoshufenjie_categories.length] = {
+			"name" : "第" + (tiaoshufenjie_current - 1) + "步",
+			"keyword" : {},
+			"base" : "第" + (tiaoshufenjie_current - 1) + "步"
+		};
+	tiaoshufenjie_legenddata[tiaoshufenjie_legenddata.length] = "第"
+			+ (tiaoshufenjie_current - 1) + "步";
+	tiaoshufenjie_currentceng=[];
+	for(var i=0;i<currentceng.length;i++)
+		tiaoshufenjie_currentceng[i]=currentceng[i];
+	if(currentceng.length==0)
+	{
+		//alert("已经是最后一跳！");
+		$("#tiaoshufenjie_next").hide();
+		return;
+	}
+	drawGraph();
+	
+	/*for(var i=0;i<messagesLinks.length;i++){
+		for(var j=0;j<tiaoshufenjie_currentceng.length;j++){
+			//边的终点和节点相等，并且终点没有访问过，则将节点加入到节点集合，节点大小一个加1一个新生成为1，添加一条边并且边的权值+1
+			if(tiaoshufenjie_currentceng[j]===messagesLinks[i].source&&inArray(messagesLinks[i].target, tiaoshufenjie_nodes) == -1){
+				//添加新节点
+				var node=new Object();
+				node.name=messagesLinks[i].target;
+				node.size=1;
+				node.value=1;
+				node.category=tiaoshufenjie_current-1;
+				tiaoshufenjie_nodes[tiaoshufenjie_nodes.length]=node;
+				currentceng[currentceng.length]=messagesLinks[i].target;
+				//为老节点大小+1
+				var senderindex=inArray(messagesLinks[i].source, tiaoshufenjie_nodes);
+				tiaoshufenjie_node[senderindex].size=tiaoshufenjie_node[senderindex].size+1;
+				tiaoshufenjie_node[senderindex].value=tiaoshufenjie_node[senderindex].value+1;
+				//添加新边
+				var link=new Object;
+				link.source=tiaoshufenjie_currentceng[j];
+				link.target=messagesLinks[i].target;
+				link.weight=1;
+				tiaoshufenjie_links[tiaoshufenjie_links.length]=link;
+			}
+			//边的终点和节点相等，但是访问过，则为两个节点大小+1，老边权值+1
+			else if(tiaoshufenjie_currentceng[j]===messagesLinks[i].source&&inArray(messagesLinks[i].target, tiaoshufenjie_nodes) != -1){
+				//为两个节点大小加+
+				var senderid=inArray(messages[i].senderid, tiaoshufenjie_nodes);
+				var recpid=inArray(messages[i].recipientid, tiaoshufenjie_nodes);
+				tiaoshufenjie_nodes[senderid].size=tiaoshufenjie_nodes[senderid].size+1;
+				tiaoshufenjie_nodes[senderid].value=tiaoshufenjie_nodes[senderid].value+1;
+				tiaoshufenjie_nodes[recpid].size=tiaoshufenjie_nodes[recpid].size+1;
+				tiaoshufenjie_nodes[recpid].value=tiaoshufenjie_nodes[recpid].value+1;
+				//边权值加+
+				for(var k=0;k<tiaoshufenjie_links.length;k++){
+					if(tiaoshufenjie_links[i].source===tiaoshufenjie_currentceng[j])
+				}
+			}
+		
+		}
+	}*/
+	//在确定边
+}
+function inArray(s,array){
+	for(var i=0;i<array.length;i++){
+		if(String(s)===array[i].name)
+			return i;
+	}
+	return -1;
+}
+function findIndex(s){
+	for(var i=0;i<messagesNodes.length;i++){
+		if(messagesNodes[i]===s)
+			return i;
+	}
+	return -1;
+}
+//是否全为1
+function isAllOne(array){
+	for(var i=0;i<array.length;i++){
+		if(array[i]==0)
+			return 0;
+	}
+	return 1;
+}
+function drawGraph(){
+	var myChart = echarts.init(document.getElementById('tiaoshufenjie_graph'));
+    option = {
+		title : {
+			text : '消息传播跳数分解图',
+			x : 'center',
+			y : 'bottom'
+		},
+		legend : {
+		    data : tiaoshufenjie_legenddata,
+		    orient : 'vertical',
+		    x : 'left'
+		},
+		tooltip : {
+			trigger : 'item',
+			formatter : "{b}"
+		},
+		backgroundColor:'#DCDCDC',
+		toolbox : {
+			show : true,
+			feature : {
+				restore : {
+					show : true
+				},
+				magicType : {
+					show : true,
+					type : [ 'force', 'chord' ],
+					option : {
+						chord : {
+							minRadius : 2,
+							maxRadius : 10,
+							ribbonType : false,
+							itemStyle : {
+								normal : {
+									label : {
+										show : true,
+										rotate : true
+									},
+									chordStyle : {
+										opacity : 0.2
+									}
+								}
+							}
+						},
+						force : {
+							minRadius : 10,
+							maxRadius : 20,
+							itemStyle : {
+								normal : {
+									label : {
+										show : false
+									},
+									linkStyle : {
+										opacity : 3
+									}
+								}
+							}
+						}
+					}
+				},
+				saveAsImage : {
+					show : true
+				}
+			}
+		},
+		noDataEffect : 'none',
+		series : [ {
+			// FIXME No data
+			type : 'force',
+		} ],
+	};
+
+	option.series[0] = {
+		type : 'force',
+		name : 'webkit-dep',
+		itemStyle : {
+			normal : {
+				linkStyle : {
+					opacity : 3
+				}
+			}
+		},
+		categories : tiaoshufenjie_categories,
+		nodes : tiaoshufenjie_nodes,
+		links : tiaoshufenjie_links,
+		minRadius : nodesizeMin,
+		maxRadius : nodesizeMax,
+		gravity : 1.1,
+		scaling : 1.1,
+		steps : 20,
+		large : true,
+		useWorker : true,
+		coolDown : 0.995,
+		ribbonType : false,
+	};
+	myChart.setOption(option);
+}
+function tiaoshufenjie_huanyuan(){
+	//将当前的跳数设置为第一跳还原后的情况
+	tiaoshufenjie_current=1;
+	tiaoshufenjie_nodes = [];
+	tiaoshufenjie_links = [];
+	tiaoshufenjie_categories = [];
+	tiaoshufenjie_legenddata = [];
+	tiaoshufenjie_currentceng=[];
+	for (var i = 0; i < tiaoshufenjie_huanyuan_nodes.length; i++) {
+		var node = new Object();
+		node.name = tiaoshufenjie_huanyuan_nodes[i].name;
+		node.size = tiaoshufenjie_huanyuan_nodes[i].size;
+		node.value = tiaoshufenjie_huanyuan_nodes[i].value;
+		node.category = tiaoshufenjie_huanyuan_nodes[i].category;
+		tiaoshufenjie_nodes[i] = node;
+	}
+	for (var i = 0; i < tiaoshufenjie_huanyuan_links.length; i++) {
+		var message = new Object();
+		message.source = tiaoshufenjie_huanyuan_links[i].source;
+		message.target = tiaoshufenjie_huanyuan_links[i].target;
+		message.weight = tiaoshufenjie_huanyuan_links[i].weight;
+		tiaoshufenjie_links[i] = message;
+	}
+	for (var i = 0; i < tiaoshufenjie_huanyuan_categories.length; i++)
+		tiaoshufenjie_categories[i] = tiaoshufenjie_huanyuan_categories[i];
+	for (var i = 0; i < tiaoshufenjie_huanyuan_legenddata.length; i++)
+		tiaoshufenjie_legenddata[i] = tiaoshufenjie_huanyuan_legenddata[i];
+	for (var i = 0; i < tiaoshufenjie_huanyuan_currentceng.length; i++)
+		tiaoshufenjie_currentceng[i] = tiaoshufenjie_huanyuan_currentceng[i];
+	for (var i = 0; i < tiaoshufenjie_huanyuan_flagArray.length; i++)
+		tiaoshufenjie_flagArray[i] = tiaoshufenjie_huanyuan_flagArray[i];
+	drawGraph();
+	//显示下一跳的按钮
+	$("#tiaoshufenjie_next").show();
+}
+/*function fenjie_tiaoshu(){
 	tianshufenjie_messages=new Array();
 	//先判断是否搜索了消息
 	if(message==null){
@@ -717,17 +1160,17 @@ function fenjie_tiaoshu(){
 function draw_tiaoshufenjie(){
 	//初始化其他参数，将其归零
 	tiaoshufenjie_current=0;
-	tiaoshufenjie_nodes=new Array();
-	tiaoshufenjie_links=new Array();
-	tiaoshufenjie_categories=new Array();
-	tiaoshufenjie_legenddata=new Array();
-	tiaoshufenjie_messageshou=new Array();
+	tiaoshufenjie_nodes=[];
+	tiaoshufenjie_links=[];
+	tiaoshufenjie_categories=[];
+	tiaoshufenjie_legenddata=[];
+	tiaoshufenjie_messageshou=[];
 	
-	tiaoshufenjie_huanyuan_messages=new Array();
-	tiaoshufenjie_huanyuan_nodes=new Array();
-	tiaoshufenjie_huanyuan_links=new Array();
-	tiaoshufenjie_huanyuan_categories=new Array();
-	tiaoshufenjie_huanyuan_legenddata=new Array();
+	tiaoshufenjie_huanyuan_messages=[];
+	tiaoshufenjie_huanyuan_nodes=[];
+	tiaoshufenjie_huanyuan_links=[];
+	tiaoshufenjie_huanyuan_categories=[];
+	tiaoshufenjie_huanyuan_legenddata=[];
 	$("#main").remove();
 	var maingraph_div="<div id='main' style='width: 100%;height:500px;'></div>";
     $("#grid_10").append(maingraph_div);
@@ -753,7 +1196,12 @@ function tiaoshufenjie_next(){
 			var j=0;
 			for(j=0;j<tiaoshufenjie_messageshou.length;j++)
 			{
-				if(tiaoshufenjie_messagesqian[i][k].source===tiaoshufenjie_messageshou[j].source&&tiaoshufenjie_messagesqian[i][k].target===tiaoshufenjie_messageshou[j].target)
+				if(String(tiaoshufenjie_messagesqian[i][k].source)===String(tiaoshufenjie_messageshou[j].source)&&String(tiaoshufenjie_messagesqian[i][k].target)===String(tiaoshufenjie_messageshou[j].target))
+				{
+					flag=1;
+					break;
+				}
+				if(String(tiaoshufenjie_messagesqian[i][k].target)===String(tiaoshufenjie_messageshou[j].source)&&String(tiaoshufenjie_messagesqian[i][k].source)===String(tiaoshufenjie_messageshou[j].target))
 				{
 					flag=1;
 					break;
@@ -812,8 +1260,10 @@ function tiaoshufenjie_next(){
 		if(flagend==0){
 			var node=new Object();
 			node.name=tiaoshufenjie_messageshou[i].target;
-			node.size=tiaoshufenjie_messageshou[i].weight;
-			node.value=tiaoshufenjie_messageshou[i].weight;
+//			node.size=tiaoshufenjie_messageshou[i].weight;
+//			node.value=tiaoshufenjie_messageshou[i].weight;
+			node.size=1;
+			node.value=1;
 			node.category=tiaoshufenjie_current-1;
 			tiaoshufenjie_nodes[tiaoshufenjie_nodes.length]=node;
 		}
@@ -827,21 +1277,37 @@ function tiaoshufenjie_next(){
 	tiaoshufenjie_legenddata[tiaoshufenjie_legenddata.length]="第"+(tiaoshufenjie_current-1)+"步";
 	//记录下第0跳的情况，用于还原
 	if(tiaoshufenjie_current==1){
-		tiaoshufenjie_huanyuan_nodes=new Array();
-		tiaoshufenjie_huanyuan_links=new Array();
-		tiaoshufenjie_huanyuan_categories=new Array();
-		tiaoshufenjie_huanyuan_legenddata=new Array();
-		tiaoshufenjie_huanyuan_messages=new Array();
-		for(var i=0;i<tiaoshufenjie_nodes.length;i++)
-			tiaoshufenjie_huanyuan_nodes[i]=tiaoshufenjie_nodes[i];
-		for(var i=0;i<tiaoshufenjie_links.length;i++)
-			tiaoshufenjie_huanyuan_links[i]=tiaoshufenjie_links[i];
+		tiaoshufenjie_huanyuan_nodes=[];
+		tiaoshufenjie_huanyuan_links=[];
+		tiaoshufenjie_huanyuan_categories=[];
+		tiaoshufenjie_huanyuan_legenddata=[];
+		tiaoshufenjie_huanyuan_messages=[];
+		for(var i=0;i<tiaoshufenjie_nodes.length;i++){
+			var node=new Object();
+			node.name=tiaoshufenjie_nodes[i].name;
+			node.size=tiaoshufenjie_nodes[i].size;
+			node.value=tiaoshufenjie_nodes[i].value;
+			node.category=tiaoshufenjie_nodes[i].category;
+			tiaoshufenjie_huanyuan_nodes[i]=node;
+		}		
+		for(var i=0;i<tiaoshufenjie_links.length;i++){
+			var message=new Object();
+		    message.source=tiaoshufenjie_links[i].source;
+		    message.target=tiaoshufenjie_links[i].target;
+		    message.weight=tiaoshufenjie_links[i].weight;
+		    tiaoshufenjie_huanyuan_links[i]=message;
+		}	
 		for(var i=0;i<tiaoshufenjie_categories.length;i++)
 			tiaoshufenjie_huanyuan_categories[i]=tiaoshufenjie_categories[i];
 		for(var i=0;i<tiaoshufenjie_legenddata.length;i++)
 			tiaoshufenjie_huanyuan_legenddata[i]=tiaoshufenjie_legenddata[i];
-		for(var i=0;i<tiaoshufenjie_messageshou.length;i++)
-			tiaoshufenjie_huanyuan_messages[i]=tiaoshufenjie_messageshou[i];
+		for(var i=0;i<tiaoshufenjie_messageshou.length;i++){
+			var message=new Object();
+		    message.source=tiaoshufenjie_messageshou[i].source;
+		    message.target=tiaoshufenjie_messageshou[i].target;
+		    message.weight=tiaoshufenjie_messageshou[i].weight;
+		    tiaoshufenjie_huanyuan_messages[i]=message;
+		}
 	}
 	var myChart = echarts.init(document.getElementById('tiaoshufenjie_graph'));
     option = {
@@ -1043,11 +1509,11 @@ function tiaoshufenjie_huanyuan(){
 	myChart.setOption(option);
 	//将当前的跳数设置为第一跳还原后的情况
 	tiaoshufenjie_current=1;
-	tiaoshufenjie_messageshou=new Array();
-	tiaoshufenjie_nodes=new Array();
-	tiaoshufenjie_links=new Array();
-	tiaoshufenjie_categories=new Array();
-	tiaoshufenjie_legenddata=new Array();
+	tiaoshufenjie_messageshou=[];
+	tiaoshufenjie_nodes=[];
+	tiaoshufenjie_links=[];
+	tiaoshufenjie_categories=[];
+	tiaoshufenjie_legenddata=[];
 	for(var i=0;i<tiaoshufenjie_huanyuan_nodes.length;i++)
 		tiaoshufenjie_nodes[i]=tiaoshufenjie_huanyuan_nodes[i];
 	for(var i=0;i<tiaoshufenjie_huanyuan_links.length;i++)
@@ -1060,7 +1526,7 @@ function tiaoshufenjie_huanyuan(){
 		tiaoshufenjie_messageshou[i]=tiaoshufenjie_huanyuan_messages[i];
 	//显示下一跳的按钮
 	$("#tiaoshufenjie_next").show();
-}
+}*/
 /***************************************消息统计*******************************/
 var xdata=new Array();
 var ydata=new Array();
@@ -1135,6 +1601,11 @@ function doDrawLineGraph(){
 		//var indexin=i;
 		var count=0;
 		var messageDatein=new Date(messages[i].time.substr(0,16).replace(/-/g,"/"));
+		if(messageDatein.getTime()<start.getTime()){
+			i++;
+			continue;
+		}
+			
 		//获取xdata
 //		if(end.getTime()>=endDate.getTime())
 //			xdata[xdata.length]=getxdata(start,time_inter)+"-"+getxdata(endDate,time_inter);
